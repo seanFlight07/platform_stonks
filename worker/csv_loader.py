@@ -1,15 +1,16 @@
-#Add the code name to the table
-#change the name of the Change $ and Change %
-#Verify no missing data in the data frame
-#function the two parts company data and processing the dataframe
-#push data to the database
-#change date to comply with db spec
+#refactor code
+#create functions for each process and a main component
+#clean up validation
+#handle duplication of inserts into the database
+#handle user input for items
 
 
 import pandas as pd
+from database.connection import engine
+from sqlalchemy import text
 
 NAME_OF_FILE = input("Input name of the file:")
-FILE_PATH = "./data/" + NAME_OF_FILE
+FILE_PATH = "./worker/data/" + NAME_OF_FILE
 
 #get information of the company
 code = input("Enter code of company: ")
@@ -32,6 +33,7 @@ csv_file_name_change = csv_file_raw.rename(columns={
 })
 csv_file_name_change['code'] = code
 csv_file_name_change = csv_file_name_change.replace(r"^\s*$", pd.NA, regex=True)
+active = active.upper() == "Y"
 
 print(csv_file_name_change)
 
@@ -51,6 +53,20 @@ is_data_valid = columns_with_no_missing.all()
 if is_data_valid and has_required_columns:
     print("ready for upload")
     #DB connection for upload
+    with engine.begin() as connection:
+        query = text("""
+        INSERT INTO company(code, name, exchange, active)
+        VALUES (:code, :name, :exchange, :active)
+        """)
+
+        connection.execute( query,{
+            "code": code,
+            "name": name_of_company,
+            "exchange": exchange,
+            "active": active
+        })
+
+        csv_file_name_change.head(5).to_sql(name="price", con=connection,if_exists="append", index=False)
 else:
     print("Upload failed. Missing data")
 
