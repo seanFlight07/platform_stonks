@@ -1,26 +1,57 @@
-#refactor code
-#create functions for each process and a main component
-#clean up validation
-#handle duplication of inserts into the database
-#handle user input for items
-
 import pandas as pd
 from database.connection import engine
-from sqlalchemy import text
+from sqlalchemy import MetaData, Table, text
+from sqlalchemy.dialects.postgresql import insert
+from pathlib import Path
+#veridication helpers
+def get_required_input(prompt):
+    while True:
+        value = input(prompt).strip()
+        if value:
+            return value
+        print("Please enter a valid value")
+
+
+def get_yes_no_input(prompt):
+    while True:
+        value = input(prompt).strip().upper()
+        if value in ["Y", "N"]:
+            return value == "Y"
+        print("Please enter Y or N.")
+
+def does_file_exist(prompt):
+    while True:
+        value = input(prompt).strip()
+        abs_path = Path("./worker/data") / value
+        if abs_path.is_file():
+            return abs_path.resolve()
+        print(f"File {value} does not exist\nPlease enter again: ")
+
+def company_exists(connection, code):
+    query = text("""
+        SELECT 1
+        FROM company
+        WHERE code = :code
+    """)
+
+    result = connection.execute(
+        query,
+        {"code": code}
+    )
+
+    return result.first() is not None
 
 
 def get_company_details():
-    NAME_OF_FILE = input("Input name of the file:")
-    FILE_PATH = "./worker/data/" + NAME_OF_FILE
-    
     company_details = {}
-    #get information of the company
-    company_details["code"] = input("Enter code of company: ")
-    company_details["name_of_company"] = input("Enter name of company: ")
-    company_details["exchange"] = input("Listed exchange of company: ")
-    company_details["active"] = input("Set this as active retrival? [Y/N]").upper() == "Y"
     
-    return company_details, FILE_PATH
+    name_of_file = does_file_exist("Input name of the file:") 
+    company_details["code"] = get_required_input("Enter code of company: ").upper()
+    company_details["name_of_company"] = get_required_input("Enter name of company: ")
+    company_details["exchange"] = get_required_input("Listed exchange of company: ").upper()
+    company_details["active"] = get_yes_no_input("Set this as active retrival? [Y/N]")
+
+    return company_details, name_of_file
 
 
 def load_csv(file_path):
@@ -55,7 +86,16 @@ def validation(data):
                     "volume",
                     "date",
                     "code"]
-    
+    extra_columns = [
+    column
+    for column in data.columns
+    if column not in columns_needed
+    ]
+    if extra_columns:
+        errors.append(
+            f"Unexpected columns: {extra_columns}"
+        )
+
     for column in columns_needed:
         if column not in data.columns:
             errors.append(f"Missing required column: {column}")
@@ -73,6 +113,12 @@ def validation(data):
 
 def upload_data(data, company):
     with engine.begin() as connection:
+        if company_exists(connection,company["code"]):
+            print(
+                f"Company {company['code']} Already exists. Failed to upload"
+            )
+            return
+        
         query = text("""
             INSERT INTO company(code, name, exchange, active)
             VALUES (:code, :name, :exchange, :active)
@@ -84,8 +130,16 @@ def upload_data(data, company):
             "exchange": company["exchange"],
             "active": company["active"]
         })
+        meta_data = MetaData()
+        target_table = Table('price', meta_data,autoload_with=connection)
+        records = data.to_dict(orient='records')
 
-        data.head(5).to_sql(name="price", con=connection,if_exists="append", index=False)
+        if records:
+            insert_statment = insert(target_table).values(records)
+            do_nothing = insert_statment.on_conflict_do_nothing(
+                index_elements=["code","date"]
+            )
+            connection.execute(do_nothing)
 
 
 def main():
@@ -96,6 +150,7 @@ def main():
 
     if is_valid:
         upload_data(clean_file, company_details)
+        print(f"Company {company_details['code']} and data from {file_path} have Successfully been uploaded")
     else:
         print("Failed upload")
         for error in errors:
