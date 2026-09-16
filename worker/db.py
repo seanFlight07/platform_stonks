@@ -30,7 +30,7 @@ def get_active_companies():
 
     return companies
 
-def get_last_price():
+def get_last_prices():
     query = text("""
         SELECT DISTINCT ON (code)
             code,
@@ -47,13 +47,12 @@ def get_last_price():
             last_prices[row.code] = row.close
     return last_prices
 
-
+#once done can remove this 
 if __name__ == "__main__":
     companies = get_active_companies()
     last_price = get_last_price()
     for company in companies:
         code = company["code"]
-        print(company)
         print(last_price)
         previous_close = last_price.get(code)
 
