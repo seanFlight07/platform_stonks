@@ -30,9 +30,31 @@ def get_active_companies():
 
     return companies
 
+def get_last_price():
+    query = text("""
+        SELECT DISTINCT ON (code)
+            code,
+            close
+        FROM price
+        ORDER BY code, date DESC
+    """)
+
+    with engine.connect() as connection:
+        result = connection.execute(query)
+        last_prices = {}
+        
+        for row in result:
+            last_prices[row.code] = row.close
+    return last_prices
+
 
 if __name__ == "__main__":
     companies = get_active_companies()
-
+    last_price = get_last_price()
     for company in companies:
+        code = company["code"]
         print(company)
+        print(last_price)
+        previous_close = last_price.get(code)
+
+        print(code, previous_close)
