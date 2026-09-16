@@ -8,3 +8,4 @@ This is to show case my knowledge on the technologies along with running it as a
 Accessing db
 
 sudo docker compose exec database psql -U username -d db_name
+truncate table price, company;
