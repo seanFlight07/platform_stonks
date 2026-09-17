@@ -1,6 +1,7 @@
 import os
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, Table, MetaData
 from dotenv import load_dotenv
+from sqlalchemy.dialects.postgresql import insert
 
 load_dotenv()
 
@@ -46,14 +47,52 @@ def get_last_prices():
         for row in result:
             last_prices[row.code] = row.close
     return last_prices
+def company_exists(connection, code):
+    query = text("""
+        SELECT 1
+        FROM company
+        WHERE code = :code
+    """)
 
-#once done can remove this 
-if __name__ == "__main__":
-    companies = get_active_companies()
-    last_price = get_last_price()
-    for company in companies:
-        code = company["code"]
-        print(last_price)
-        previous_close = last_price.get(code)
+    result = connection.execute(
+        query,
+        {"code": code}
+    )
 
-        print(code, previous_close)
+    return result.first() is not None
+
+def insert_company(company):
+    with engine.begin() as connection:
+
+        if company_exists(connection, company["code"]):
+            print(
+                f"Company {company['code']} already exists. Failed to upload"
+            )
+            return False
+
+        query = text("""
+            INSERT INTO company(code, name, exchange, active)
+            VALUES (:code, :name, :exchange, :active)
+        """)
+
+        connection.execute(query, {
+            "code": company["code"],
+            "name": company["name"],
+            "exchange": company["exchange"],
+            "active": company["active"]
+        })
+
+        return True
+
+def upload_data(data):
+     with engine.begin() as connection:
+        meta_data = MetaData()
+        target_table = Table('price', meta_data,autoload_with=connection)
+        records = data.to_dict(orient='records')
+
+        if records:
+            insert_statment = insert(target_table).values(records)
+            do_nothing = insert_statment.on_conflict_do_nothing(
+                index_elements=["code","date"]
+            )
+            connection.execute(do_nothing)

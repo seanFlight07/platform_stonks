@@ -1,8 +1,6 @@
 import pandas as pd
-from database.connection import engine
-from sqlalchemy import MetaData, Table, text
-from sqlalchemy.dialects.postgresql import insert
 from pathlib import Path
+from worker import db
 #veridication helpers
 def get_required_input(prompt):
     while True:
@@ -27,27 +25,13 @@ def does_file_exist(prompt):
             return abs_path.resolve()
         print(f"File {value} does not exist\nPlease enter again: ")
 
-def company_exists(connection, code):
-    query = text("""
-        SELECT 1
-        FROM company
-        WHERE code = :code
-    """)
-
-    result = connection.execute(
-        query,
-        {"code": code}
-    )
-
-    return result.first() is not None
-
 
 def get_company_details():
     company_details = {}
     
     name_of_file = does_file_exist("Input name of the file:") 
     company_details["code"] = get_required_input("Enter code of company: ").upper()
-    company_details["name_of_company"] = get_required_input("Enter name of company: ")
+    company_details["name"] = get_required_input("Enter name of company: ")
     company_details["exchange"] = get_required_input("Listed exchange of company: ").upper()
     company_details["active"] = get_yes_no_input("Set this as active retrival? [Y/N]")
 
@@ -111,50 +95,30 @@ def validation(data):
 
     return True, errors
 
-def upload_data(data, company):
-    with engine.begin() as connection:
-        if company_exists(connection,company["code"]):
-            print(
-                f"Company {company['code']} Already exists. Failed to upload"
-            )
-            return
-        
-        query = text("""
-            INSERT INTO company(code, name, exchange, active)
-            VALUES (:code, :name, :exchange, :active)
-            """)
-
-        connection.execute( query,{
-            "code": company["code"],
-            "name": company["name_of_company"],
-            "exchange": company["exchange"],
-            "active": company["active"]
-        })
-        meta_data = MetaData()
-        target_table = Table('price', meta_data,autoload_with=connection)
-        records = data.to_dict(orient='records')
-
-        if records:
-            insert_statment = insert(target_table).values(records)
-            do_nothing = insert_statment.on_conflict_do_nothing(
-                index_elements=["code","date"]
-            )
-            connection.execute(do_nothing)
-
 
 def main():
     company_details, file_path = get_company_details()
     raw_file = load_csv(file_path)
-    clean_file = transform_data(raw_file, company_details["code"])
+    clean_file = transform_data(
+        raw_file,
+        company_details["code"]
+    )
     is_valid, errors = validation(clean_file)
-
-    if is_valid:
-        upload_data(clean_file, company_details)
-        print(f"Company {company_details['code']} and data from {file_path} have Successfully been uploaded")
-    else:
+    if not is_valid:
         print("Failed upload")
         for error in errors:
             print(f"- {error}")
+        return
+
+    company_inserted = db.insert_company(company_details)
+    if not company_inserted:
+        print("Failed upload")
+        return
+    db.upload_data(clean_file)
+    print(
+        f"Company {company_details['code']} and data from "
+        f"{file_path} have successfully been uploaded"
+    )
 
 if __name__ == "__main__":
     main()
