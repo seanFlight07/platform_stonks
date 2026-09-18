@@ -46,7 +46,7 @@ def get_active_companies():
             })
     return companies
 
-def company_exists(connection, code):
+def company_exists(code):
     query = text("""
         SELECT 1
         FROM company
@@ -58,11 +58,11 @@ def company_exists(connection, code):
 
 def insert_company(company):
     with engine.begin() as connection:
-        if company_exists(connection, company["code"]):
+        if company_exists(company["code"]):
             print(
                 f"Company {company['code']} already exists. Failed to upload"
             )
-        return False
+            return False
         query = text("""
             INSERT INTO company(code, name, exchange, active)
             VALUES (:code, :name, :exchange, :active)

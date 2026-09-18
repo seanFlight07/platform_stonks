@@ -1,11 +1,15 @@
-from pydantic import BaseModel
-
+from pydantic import BaseModel, field_validator
 
 class CompanyCreate(BaseModel):
     code: str
     name: str
     exchange: str
     active: bool
+
+    @field_validator("code", "exchange")
+    @classmethod
+    def uppercase_fields(cls, value):
+        return value.upper()
 
 class PriceCreate(BaseModel):
     code: str
@@ -17,3 +21,4 @@ class PriceCreate(BaseModel):
     change_dollar: float
     change_pct: float
     volume: int
+

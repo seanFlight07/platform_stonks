@@ -1,6 +1,9 @@
 import pandas as pd
+from database.connection import engine
+from sqlalchemy import MetaData, Table, text
+from sqlalchemy.dialects.postgresql import insert
 from pathlib import Path
-from utils import db
+import db
 #veridication helpers
 def get_required_input(prompt):
     while True:
@@ -25,13 +28,12 @@ def does_file_exist(prompt):
             return abs_path.resolve()
         print(f"File {value} does not exist\nPlease enter again: ")
 
-
 def get_company_details():
     company_details = {}
     
     name_of_file = does_file_exist("Input name of the file:") 
     company_details["code"] = get_required_input("Enter code of company: ").upper()
-    company_details["name"] = get_required_input("Enter name of company: ")
+    company_details["name_of_company"] = get_required_input("Enter name of company: ")
     company_details["exchange"] = get_required_input("Listed exchange of company: ").upper()
     company_details["active"] = get_yes_no_input("Set this as active retrival? [Y/N]")
 
@@ -99,26 +101,16 @@ def validation(data):
 def main():
     company_details, file_path = get_company_details()
     raw_file = load_csv(file_path)
-    clean_file = transform_data(
-        raw_file,
-        company_details["code"]
-    )
+    clean_file = transform_data(raw_file, company_details["code"])
     is_valid, errors = validation(clean_file)
-    if not is_valid:
+    company_exists = db.company_exists(company_details["code"])
+    if is_valid and company_exists:
+        db.upload_data(clean_file, company_details)
+        print(f"Company {company_details['code']} and data from {file_path} have Successfully been uploaded")
+    else:
         print("Failed upload")
         for error in errors:
             print(f"- {error}")
-        return
-
-    company_inserted = db.insert_company(company_details)
-    if not company_inserted:
-        print("Failed upload")
-        return
-    db.upload_data(clean_file)
-    print(
-        f"Company {company_details['code']} and data from "
-        f"{file_path} have successfully been uploaded"
-    )
 
 if __name__ == "__main__":
     main()
