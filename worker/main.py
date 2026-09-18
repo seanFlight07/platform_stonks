@@ -1,6 +1,6 @@
-import db
+from utils import db
 import api_fetcher
-import transforms
+from utils import transforms
 
 
 def main():

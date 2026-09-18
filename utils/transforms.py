@@ -1,5 +1,5 @@
 import db
-import api_fetcher
+from worker import api_fetcher
 import pandas as pd
 
 def add_code(data,code):
