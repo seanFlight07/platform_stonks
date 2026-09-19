@@ -13,4 +13,5 @@ def api_fetch_stock(ticker, exchange):
         logger.info("Data has been fetched for %s", unique_code)
     except Exception:
         logger.exception("Failed to get any data from yfinance for %s",unique_code)
+        raise
     return data
