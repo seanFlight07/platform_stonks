@@ -7,7 +7,7 @@ def api_fetch_stock(ticker, exchange):
     unique_code = str(ticker+"."+exchange)
     try:
         data = yf.download(unique_code,period='1d')
-        if data.empty():
+        if data.empty:
             logger.warning("No data was pulled back for %s", unique_code)
             return data
         logger.info("Data has been fetched for %s", unique_code)

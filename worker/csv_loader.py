@@ -3,7 +3,7 @@ from database.connection import engine
 from sqlalchemy import MetaData, Table, text
 from sqlalchemy.dialects.postgresql import insert
 from pathlib import Path
-from utils import db
+from utils import db, transforms
 #veridication helpers
 def get_required_input(prompt):
     while True:
@@ -28,6 +28,21 @@ def does_file_exist(prompt):
             return abs_path.resolve()
         print(f"File {value} does not exist\nPlease enter again: ")
 
+def company_exists(connection, code):
+    query = text("""
+        SELECT 1
+        FROM company
+        WHERE code = :code
+    """)
+
+    result = connection.execute(
+        query,
+        {"code": code}
+    )
+
+    return result.first() is not None
+
+
 def get_company_details():
     company_details = {}
     
@@ -46,7 +61,7 @@ def load_csv(file_path):
     csv_file_raw = csv_file_raw.drop(columns=['Date'])
     return csv_file_raw
 
-#might be a good one to move so can change the columns from api fetching
+
 def transform_data(data, code):
     csv_file_name_change = data.rename(columns={
         "Open $": "open",
@@ -81,13 +96,13 @@ def validation(data):
         errors.append(
             f"Unexpected columns: {extra_columns}"
         )
-    #checks if all columns are needed
+
     for column in columns_needed:
         if column not in data.columns:
             errors.append(f"Missing required column: {column}")
 
     columns_with_no_missing = data.notna().all()
-    #checks if no missing data is in the columns
+
     for col_name, is_clean in columns_with_no_missing.items():
         if not is_clean:
             errors.append(f"Column '{col_name}' has missing data.")
@@ -100,25 +115,25 @@ def validation(data):
 
 def main():
     company_details, file_path = get_company_details()
+
     raw_file = load_csv(file_path)
-    clean_file = transform_data(raw_file, company_details["code"])
-    is_valid, errors = validation(clean_file)
-    company_exists = db.company_exists(company_details["code"])
 
-    if is_valid:
-        if not company_exists:
-            db.insert_company(company_details)
+    clean_file = transform_data(
+        raw_file,
+        company_details["code"]
+    )
 
-        db.insert_data(clean_file)
+    is_valid = validation(clean_file)
 
-        print(
-            f"Company {company_details['code']} and data from "
-            f"{file_path} have successfully been uploaded"
-        )
-    else:
+    if not is_valid:
         print("Failed upload")
-        for error in errors:
-            print(f"- {error}")
+        return
+
+    if not db.company_exists(company_details["code"]):
+        db.insert_company(company_details)
+
+    db.insert_data(clean_file)
+
 
 if __name__ == "__main__":
     main()

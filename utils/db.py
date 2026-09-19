@@ -8,6 +8,7 @@ logger = setup_logger(__name__)
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "postgresql+psycopg://stonk_sean:st0nks_r_l1f3@localhost:5432/stonks_db"
 engine = create_engine(DATABASE_URL)
 
 def check_db():
@@ -119,12 +120,18 @@ def insert_data(data):
             records = data.to_dict(orient='records')
 
             if records:
-                insert_statment = insert(target_table).values(records)
-                do_nothing = insert_statment.on_conflict_do_nothing(
-                    index_elements=["code","date"]
-                )
+                insert_statement = insert(target_table).values(records)
+                do_nothing = insert_statement.on_conflict_do_nothing(
+                    index_elements=["code","date"]).returning(target_table.c.code)
                 result = connection.execute(do_nothing)
-                logger.info("Inserted %s of rows",result.rowcount)
+                inserted_count = len(result.fetchall())
+                processed_count = len(records)
+                
+                if inserted_count == 0:
+                    logger.info("Processed %s price records; no new records inserted",processed_count)
+                else:
+                    logger.info("Processed %s price records; inserted %s new records",processed_count,inserted_count)
+    
     except Exception:
         logger.exception("Failed to insert data")
         raise

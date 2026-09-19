@@ -1,4 +1,4 @@
-import db
+from utils import db
 from worker import api_fetcher
 import pandas as pd
 
