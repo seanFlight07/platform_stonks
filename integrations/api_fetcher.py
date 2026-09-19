@@ -15,3 +15,17 @@ def api_fetch_stock(ticker, exchange):
         logger.exception("Failed to get any data from yfinance for %s",unique_code)
         raise
     return data
+
+def api_fetch_stock_history(ticker, exchange):
+    unique_code = str(ticker+"."+exchange)
+    try:
+        data = yf.download(unique_code,period='2y')
+        if data.empty:
+            logger.warning("No data was pulled back for %s", unique_code)
+            return data
+        logger.info("Data has been fetched for %s", unique_code)
+    except Exception:
+        logger.exception("Failed to get any data from yfinance for %s",unique_code)
+        raise
+    return data
+

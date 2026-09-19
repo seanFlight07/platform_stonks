@@ -1,4 +1,4 @@
-from worker import api_fetcher
+from integrations import api_fetcher
 from utils import db, transforms, validation,logger
 logger = logger.setup_logger(__name__)
 

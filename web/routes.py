@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from utils import db
+from utils import db, transforms, validation, logger
 from web.models import CompanyCreate
-
+from integrations import api_fetcher
 router = APIRouter()
+logger = logger.setup_logger(__name__)
 
 @router.get("/health",status_code=status.HTTP_200_OK)
 def health():
@@ -43,9 +44,22 @@ def post_company(company: CompanyCreate):
     raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail=f"Company {company.code} already exists in db")
 
-@router.post("/companies/{code}/prices")
-#need to get the company and the data to send the data
+@router.post("/companies/{code}/prices", status_code=status.HTTP_201_CREATED)
 def post_prices(code: str):
-    new_prices = db.upload_data(code)
-    return new_prices
-
+    company = db.get_company(code)
+    if company is None:
+        logger.warning("Company %s does not exist in db", code)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Company {code} does not exist")
+    logger.info("Starting historical data insert for company %s",company["code"])
+    data = api_fetcher.api_fetch_stock_history(company["code"],company['exchange']) 
+    data = transforms.transform_api_historical(data,company["code"])
+    if validation.validation(data):
+        inserted = db.insert_data(data)
+        return {
+            "detail": f"Company {company["code"]} successfully inserted"
+        }
+    else:
+        logger.warning("Failed validation for company %s",company['code'])
+    logger.info("Historical upload completed")

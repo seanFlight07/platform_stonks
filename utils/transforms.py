@@ -1,5 +1,5 @@
 from utils import db
-from worker import api_fetcher
+from integrations import api_fetcher
 import pandas as pd
 
 def add_code(data,code):
@@ -33,5 +33,26 @@ def transform_api_data(data, code, last_close):
         "Close": "close",
         "Volume": "volume"
     })
-
     return data
+
+def transform_api_historical(data,code):
+    data.columns = data.columns.get_level_values(0)
+    data = data.reset_index()
+    data = add_code(data, code)
+    data = data.sort_values("Date")
+    
+    data["change_dollar"] = data["Close"].diff()
+    data["change_pct"] = data["Close"].pct_change() * 100
+    data = data.dropna(subset=["change_dollar", "change_pct"])
+    
+    data = data.rename(columns={
+        "Date": "date",
+        "Open": "open",
+        "High": "high",
+        "Low": "low",
+        "Close": "close",
+        "Volume": "volume"
+    })
+    return data
+
+

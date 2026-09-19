@@ -23,6 +23,25 @@ def check_db():
 ################################################################
 # Company functions
 ################################################################
+def get_company(code):
+    query = text("""
+        SELECT code, name, exchange
+        FROM company
+        WHERE code = :code
+    """)
+    with engine.connect() as connection:
+        result = connection.execute(query,{"code": code})
+        row = result.first()
+
+        if row is None:
+            return None
+
+        return {
+            "code": row.code,
+            "name": row.name,
+            "exchange": row.exchange
+        }
+
 def get_all_companies():
     query = text("""
         SELECT code, name, exchange

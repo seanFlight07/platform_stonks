@@ -1,5 +1,5 @@
 from utils import db
-import api_fetcher
+from integrations import api_fetcher
 from utils import transforms
 
 
