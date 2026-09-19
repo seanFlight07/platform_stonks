@@ -24,5 +24,6 @@ def main():
         )
         db.upload_data(clean_data)
         print(f"upload successful for {company}")
+
 if __name__ == "__main__":
     main()

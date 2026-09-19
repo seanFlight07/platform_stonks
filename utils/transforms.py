@@ -14,6 +14,7 @@ def calculate_percentage_change(data,last_close):
     data["change_pct"] = ((data["change_dollar"] / last_close)*100).round(2)
     return data
 
+#Transformation to bring all other functions together
 def transform_api_data(data, code, last_close):
     last_close = float(last_close)
 

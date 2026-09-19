@@ -3,7 +3,7 @@ from database.connection import engine
 from sqlalchemy import MetaData, Table, text
 from sqlalchemy.dialects.postgresql import insert
 from pathlib import Path
-import db
+from utils import db
 #veridication helpers
 def get_required_input(prompt):
     while True:
@@ -33,7 +33,7 @@ def get_company_details():
     
     name_of_file = does_file_exist("Input name of the file:") 
     company_details["code"] = get_required_input("Enter code of company: ").upper()
-    company_details["name_of_company"] = get_required_input("Enter name of company: ")
+    company_details["name"] = get_required_input("Enter name of company: ")
     company_details["exchange"] = get_required_input("Listed exchange of company: ").upper()
     company_details["active"] = get_yes_no_input("Set this as active retrival? [Y/N]")
 
@@ -46,7 +46,7 @@ def load_csv(file_path):
     csv_file_raw = csv_file_raw.drop(columns=['Date'])
     return csv_file_raw
 
-
+#might be a good one to move so can change the columns from api fetching
 def transform_data(data, code):
     csv_file_name_change = data.rename(columns={
         "Open $": "open",
@@ -81,13 +81,13 @@ def validation(data):
         errors.append(
             f"Unexpected columns: {extra_columns}"
         )
-
+    #checks if all columns are needed
     for column in columns_needed:
         if column not in data.columns:
             errors.append(f"Missing required column: {column}")
 
     columns_with_no_missing = data.notna().all()
-
+    #checks if no missing data is in the columns
     for col_name, is_clean in columns_with_no_missing.items():
         if not is_clean:
             errors.append(f"Column '{col_name}' has missing data.")
@@ -104,9 +104,17 @@ def main():
     clean_file = transform_data(raw_file, company_details["code"])
     is_valid, errors = validation(clean_file)
     company_exists = db.company_exists(company_details["code"])
-    if is_valid and company_exists:
-        db.upload_data(clean_file, company_details)
-        print(f"Company {company_details['code']} and data from {file_path} have Successfully been uploaded")
+
+    if is_valid:
+        if not company_exists:
+            db.insert_company(company_details)
+
+        db.insert_data(clean_file)
+
+        print(
+            f"Company {company_details['code']} and data from "
+            f"{file_path} have successfully been uploaded"
+        )
     else:
         print("Failed upload")
         for error in errors:
