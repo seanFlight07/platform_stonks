@@ -1,0 +1,9 @@
+[Unit]
+Description=Platform Stonks daily price worker
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/platform_stonks
+ExecStart=/usr/bin/docker compose run --rm worker

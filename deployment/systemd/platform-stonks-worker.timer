@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule Platform Stonks daily price worker
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 17:00:00 Australia/Sydney
+Persistent=true
+Unit=platform-stonks-worker.service
+
+[Install]
+WantedBy=timers.target

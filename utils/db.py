@@ -8,7 +8,6 @@ logger = setup_logger(__name__)
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-DATABASE_URL = "postgresql+psycopg://stonk_sean:st0nks_r_l1f3@localhost:5432/stonks_db"
 engine = create_engine(DATABASE_URL)
 
 def check_db():
