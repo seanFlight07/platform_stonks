@@ -1,14 +1,17 @@
 from fastapi import APIRouter, HTTPException, status
-from utils import db, transforms, validation, logger
+
+from utils import db, transforms, validation 
+from utils import logger as logger_utils
 from web.models import CompanyCreate
 from integrations import api_fetcher
+
 router = APIRouter()
-logger = logger.setup_logger(__name__)
+logger = logger_utils.setup_logger(__name__)
 
 @router.get("/health",status_code=status.HTTP_200_OK)
 def health():
     if not db.check_db():
-        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail="Please contact admin")
     return {"status": "healthy"}
 
@@ -56,7 +59,7 @@ def post_prices(code: str):
     data = api_fetcher.api_fetch_stock_history(company["code"],company['exchange']) 
     data = transforms.transform_api_historical(data,company["code"])
     if validation.validation(data):
-        inserted = db.insert_data(data)
+        db.insert_data(data)
         return {
             "detail": f"Company {company["code"]} successfully inserted"
         }
