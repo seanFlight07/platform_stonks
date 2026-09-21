@@ -1,14 +1,109 @@
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  color: #1f2933;
 }
 
-button,
-input,
-select {
-    font: inherit;
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.header p {
+  margin-top: 8px;
+  color: #667085;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.company-selector h2 {
+  margin-top: 0;
+}
+
+.company-selector select {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  font-size: 1rem;
+}
+
+.price-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.price-header h2 {
+  margin: 0;
+}
+
+.price-header span {
+  color: #667085;
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.metric {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+.metric span {
+  display: block;
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.metric strong {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 700px) {
+  .dashboard {
+    padding: 16px;
+  }
+
+  .price-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chart-card h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.positive {
+  color: #16803c;
+}
+
+.negative {
+  color: #c62828;
 }

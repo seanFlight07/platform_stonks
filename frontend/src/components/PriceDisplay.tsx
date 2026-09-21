@@ -9,20 +9,47 @@ function PriceDisplay({prices}: PriceDisplayProps){
     return <p>No data has been loaded.</p>
   }
   const latestPrice = prices[0]
-
+  const changeClass = latestPrice.change_pct >= 0 ? "positive" : "negative"
   return (
-    <>
-    <p> Date: {latestPrice.date}</p>
-    <p> Open: ${latestPrice.open} </p>
-    <p> High: ${latestPrice.high}</p>
-    <p> Low: ${latestPrice.low}</p>
-    <p> Close: ${latestPrice.close}</p>
-    <p> Change $: ${latestPrice.change_dollar}</p>
-    <p> Change %: {latestPrice.change_pct}%</p>
-    <p> Volume: {latestPrice.volume}</p>
-  </>
-  )
+  <section className="card">
+    <div className="price-header">
+      <h2>Latest Price</h2>
+      <span>{latestPrice.date}</span>
+    </div>
 
+    <div className="price-grid">
+      <div className="metric">
+        <span>Close</span>
+        <strong>${latestPrice.close.toFixed(2)}</strong>
+      </div>
+
+      <div className="metric">
+        <span>Change</span>
+        <strong className={changeClass}>{latestPrice.change_pct.toFixed(2)}%</strong>
+      </div>
+
+      <div className="metric">
+        <span>Open</span>
+        <strong>${latestPrice.open.toFixed(2)}</strong>
+      </div>
+
+      <div className="metric">
+        <span>High</span>
+        <strong>${latestPrice.high.toFixed(2)}</strong>
+      </div>
+
+      <div className="metric">
+        <span>Low</span>
+        <strong>${latestPrice.low.toFixed(2)}</strong>
+      </div>
+
+      <div className="metric">
+        <span>Volume</span>
+        <strong>{latestPrice.volume.toLocaleString()}</strong>
+      </div>
+    </div>
+  </section>
+)
 }
 
 export default PriceDisplay

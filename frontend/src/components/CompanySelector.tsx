@@ -8,7 +8,7 @@ interface CompanySelectorProps{
 
 function CompanySelector({companies, selectedCompany, setSelectedCompany}: CompanySelectorProps){
   return(
-      <section>
+      <section className=" card CompanySelector">
         <h2>Select Company</h2>
           <select
             value={selectedCompany}

@@ -50,7 +50,7 @@ function App() {
 
 
   return (
-        <main>
+        <main className='dashboard'>
           <Header title="Platform Stonks" 
                   subtitle="Stock market analysis platform"
           />
