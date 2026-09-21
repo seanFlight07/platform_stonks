@@ -1,6 +1,8 @@
 from integrations import api_fetcher
-from utils import db, transforms, validation,logger
-logger = logger.setup_logger(__name__)
+from utils import db, transforms, validation
+from utils import logger as logger_utils
+
+logger = logger_utils.setup_logger(__name__)
 
 def main():
     companies = db.get_active_companies()

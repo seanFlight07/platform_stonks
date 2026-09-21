@@ -1,6 +1,6 @@
-from utils import logger
+from utils import logger as logger_utils
 
-logger = logger.setup_logger(__name__)
+logger = logger_utils.setup_logger(__name__)
 
 def validation(data):
     errors = 0

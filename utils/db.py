@@ -167,6 +167,7 @@ def get_prices(code):
                 volume
             FROM price
             WHERE code = :code
+            ORDER BY date DESC
         """)
         with engine.connect() as connection:
             result = connection.execute(query,{"code":code} )

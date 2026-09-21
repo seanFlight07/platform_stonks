@@ -34,5 +34,12 @@ services:
       - database
     command: ["python","-m","worker.api_worker"]
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - web
 volumes:
   postgres_data:
