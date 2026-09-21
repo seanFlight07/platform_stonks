@@ -1,34 +1,30 @@
 import Header from './components/Header'
 import CompanySelector from './components/CompanySelector'
-const companies = [
-    {
-        code: "CCP",
-        name: "Credit Corp",
-        exchange: "AX",
-        active: true
-    },
-    {
-        code: "WBC",
-        name: "Westpac",
-        exchange: "AX",
-        active: true
-    },
-    {
-        code: "NAB",
-        name: "National Australia Bank",
-        exchange: "AX",
-        active: true
-    }
-]
+import {useState, useEffect } from 'react'
+import type {Company} from './types/company'
+import { getCompanies } from './services/api'
+
 
 function App() {
-    return (
+  const [selectedCompany, setSelectedCompany] = useState("")
+  const [companies,setCompanies] = useState<Company[]>([])
+
+  useEffect(() =>{
+    async function loadCompanies(){
+      const data = await getCompanies()
+        setCompanies(data)
+    }
+    loadCompanies()
+  },[])
+  return (
         <main>
           <Header title="Platform Stonks" 
                   subtitle="Stock market analysis platform"
           />
-          <CompanySelector companies={companies}/>
-
+          <CompanySelector companies={companies}
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}/>
+          <p>App selected company: {selectedCompany}</p>
         </main>
     )
 }

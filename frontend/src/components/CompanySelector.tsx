@@ -1,12 +1,12 @@
 import type { Company } from "../types/company"
-import { useState } from 'react'
 
 interface CompanySelectorProps{
   companies: Company[]
+  selectedCompany: string
+  setSelectedCompany: (code: string) => void
 }
 
-function CompanySelector({companies}: CompanySelectorProps){
-  const [selectedCompany, setSelectedCompany] = useState("")
+function CompanySelector({companies, selectedCompany, setSelectedCompany}: CompanySelectorProps){
   return(
       <section>
         <h2>Select Company</h2>
