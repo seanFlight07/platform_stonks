@@ -25,6 +25,8 @@ services:
       - database
 
   worker:
+    profiles:
+      - worker
     build:
       context: .
       dockerfile: web/Dockerfile
