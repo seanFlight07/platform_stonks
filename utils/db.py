@@ -237,7 +237,7 @@ def insert_into_queue(code, exchange):
                 "code": code,
                 "exchange": exchange,
                 "status": "PENDING"
-            }).first()
+            })
 
             if existing_job:
                 logger.warning("Job for %s.%s is already scheduled", code,exchange)
