@@ -73,51 +73,77 @@ def post_prices(code: str):
 
 
 @router.post("/companies/load/", status_code=HTTP_201_CREATED)
-def load_company_and_data(code,exchange):
+def load_company_and_data(code, exchange):
     code = code.upper()
     exchange = exchange.upper()
-    
+
+    # Check company exists in yfinance
     raw_company_data = api_fetcher.api_search_company(code, exchange)
 
     if not raw_company_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Company {code}.{exchange} not found"
-    )
+        )
 
+    # Convert yfinance company data to our database format
     transformed_company = transforms.transform_company(raw_company_data)
+
+    # Get exchange configuration
     exchange_info = db.get_exchange(exchange)
 
     if exchange_info is None:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
-                            detail=f"Exchange {exchange} is not supported"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Exchange {exchange} is not supported"
         )
 
+    # Check whether we can ingest now
     black_out_validation = validation.is_black_out(exchange_info)
 
     if black_out_validation:
+        queued = db.insert_into_queue(code, exchange)
+
+        if not queued:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Company {code}.{exchange} could not be queued"
+            )
+
         return {
-                "detail": f"Company {code}.{exchange} will be queued"
-        } #add to the queue job
-    
+            "detail": f"Company {code}.{exchange} has been queued"
+        }
+
+    # No blackout - insert immediately
     insert_data = db.insert_company(transformed_company)
 
     if not insert_data:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail=f"Company {code} already exists in db")
-    price_data = api_fetcher.api_fetch_stock_history(code,exchange)
-    price_data = transforms.transform_api_historical(price_data,code)
-    if validation.validation(price_data):
-        db.insert_data(price_data)
-        return {
-            "detail": f"Company {code} successfully inserted"
-        }
-    else:
-        logger.warning("Failed validation for company %s",code)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Company {code} already exists in db"
+        )
+
+    # Fetch historical prices
+    price_data = api_fetcher.api_fetch_stock_history(code, exchange)
+    price_data = transforms.transform_api_historical(price_data, code)
+
+    if not validation.validation(price_data):
+        logger.warning(
+            "Failed validation for company %s",
+            code
+        )
+
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Historical data for {code} failed validation"
-    )
+        )
+
+    # Insert historical prices
+    db.insert_data(price_data)
+
+    return {
+        "detail": f"Company {code} successfully inserted"
+    }
 
 
 
