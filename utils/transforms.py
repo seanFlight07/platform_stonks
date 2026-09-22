@@ -55,4 +55,12 @@ def transform_api_historical(data,code):
     })
     return data
 
+def transform_company(company_info):
+    return{
+        "code": company_info["code"],
+        "name": company_info["long_name"],
+        "exchange": company_info["exchange"],
+        "active": True
+
+    }
 

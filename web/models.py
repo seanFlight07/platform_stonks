@@ -27,5 +27,12 @@ class SearchCompany(BaseModel):
     def uppercase_fields(cls, value):
         return value.upper()
 
+class LoadCompanyData(BaseModel):
+    code : str
+    exchange: str
+    long_name: str
+    active: bool
+
+
 
 

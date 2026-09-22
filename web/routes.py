@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
-from starlette.status import HTTP_404_NOT_FOUND
+from requests import post, status_codes
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from utils import db, transforms, validation 
 from utils import logger as logger_utils
-from web.models import CompanyCreate, SearchCompany
+from web.models import CompanyCreate, LoadCompanyData, SearchCompany
 from integrations import api_fetcher
 
 router = APIRouter()
@@ -69,6 +70,56 @@ def post_prices(code: str):
     else:
         logger.warning("Failed validation for company %s",company['code'])
     logger.info("Historical upload completed")
+
+
+@router.post("/companies/load/", status_code=HTTP_201_CREATED)
+def load_company_and_data(code,exchange):
+    code = code.upper()
+    exchange = exchange.upper()
+    
+    raw_company_data = api_fetcher.api_search_company(code, exchange)
+
+    if not raw_company_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Company {code}.{exchange} not found"
+    )
+
+    transformed_company = transforms.transform_company(raw_company_data)
+    exchange_info = db.get_exchange(exchange)
+
+    if exchange_info is None:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST,
+                            detail=f"Exchange {exchange} is not supported"
+        )
+
+    black_out_validation = validation.is_black_out(exchange_info)
+
+    if black_out_validation:
+        return {
+                "detail": f"Company {code}.{exchange} will be queued"
+        } #add to the queue job
+    
+    insert_data = db.insert_company(transformed_company)
+
+    if not insert_data:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Company {code} already exists in db")
+    price_data = api_fetcher.api_fetch_stock_history(code,exchange)
+    price_data = transforms.transform_api_historical(price_data,code)
+    if validation.validation(price_data):
+        db.insert_data(price_data)
+        return {
+            "detail": f"Company {code} successfully inserted"
+        }
+    else:
+        logger.warning("Failed validation for company %s",code)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Historical data for {code} failed validation"
+    )
+
+
 
 #############################################################
 # GET functions from yfinance
