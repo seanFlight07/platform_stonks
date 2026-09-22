@@ -23,6 +23,20 @@ services:
       - .env
     depends_on:
       - database
+    volumes:
+      - ./web:/app/web
+      - ./utils:/app/utils
+      - ./integrations:/app/integrations
+    command:
+      [
+      "uvicorn",
+      "web.main:app",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "8000",
+      "--reload"
+    ]
 
   worker:
     profiles:
@@ -43,5 +57,10 @@ services:
       - "5173:5173"
     depends_on:
       - web
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+
 volumes:
   postgres_data:
