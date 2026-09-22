@@ -35,12 +35,13 @@ def api_fetch_stock_history(ticker, exchange):
 
 def api_search_company(code,exchange):
     company_info = {}
+    code, exchange = code.upper(), exchange.upper()
     unique_code = str(code+"."+exchange)
     try:
         data = yf.Ticker(unique_code)
         data = data.info
-        if data.empty:
-            logger.warning("No data returned for %s",unique_code)
+        if not data or not data.get("symbol"):
+            logger.warning("No valid company returned for %s",unique_code)
             return data
         company_info["code"] = code
         company_info["exchange"] = exchange
@@ -59,9 +60,11 @@ def api_search_company(code,exchange):
 def main():
     ticker = "CCP"
     exchange = "AX"
-    results = api_search_company(ticker,exchange)
-
-    print(results)
+    results = yf.Market("ASIA")
+    status = results.status
+    summary = results.summary
+    print(status)
+    print(summary)
 
 
 if __name__ == "__main__":

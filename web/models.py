@@ -11,14 +11,20 @@ class CompanyCreate(BaseModel):
     def uppercase_fields(cls, value):
         return value.upper()
 
-class PriceCreate(BaseModel):
+class SearchCompany(BaseModel):
     code: str
-    date: date
+    exchange: str
+    sector: str
+    long_name: str
+    previous_close: float
     open: float
-    high: float
-    low: float
-    close: float
-    change_dollar: float
-    change_pct: float
-    volume: int
+    day_low: float
+    day_high: float
+
+    @field_validator("code","exchange")
+    @classmethod
+    def uppercase_fields(cls, value):
+        return value.upper()
+
+
 
