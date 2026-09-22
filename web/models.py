@@ -20,6 +20,7 @@ class SearchCompany(BaseModel):
     open: float
     day_low: float
     day_high: float
+    timezone: str
 
     @field_validator("code","exchange")
     @classmethod

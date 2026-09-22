@@ -2,6 +2,7 @@ import os
 from sqlalchemy import create_engine, text, Table, MetaData
 from dotenv import load_dotenv
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import result
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -189,3 +190,28 @@ def get_prices(code):
     except Exception:
         logger.exception("failed to get price")
         raise
+
+################################################################
+# Exchange Market functions
+################################################################
+def get_exchange(exchange):
+    query = text("""
+                 SELECT timezone,
+                 blackout_start,
+                 blackout_end
+                 FROM exchange
+                 WHERE exchange = :exchange
+                 """)
+    with engine.connect() as connection:
+        result = connection.execute(query, {"exchange":exchange})
+        exchange_info = result.first()
+
+        if exchange_info is None:
+            logger.warning("No exchange information was found for %s",exchange)
+            return None
+    return {
+        "timezone": exchange_info.timezone,
+        "blackout_start": exchange_info.blackout_start,
+        "blackout_end": exchange_info.blackout_end
+    }
+

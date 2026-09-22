@@ -75,11 +75,20 @@ def post_prices(code: str):
 #############################################################
 @router.get("/companie-search/{code}.{exchange}", response_model=SearchCompany)
 def search_company(code, exchange):
+    code = code.upper()
+    exchange = exchange.upper()
     company_info = api_fetcher.api_search_company(code,exchange)
+    exchange_info = db.get_exchange(exchange)
     if company_info is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
-                            detail=f"Company {code.upper()}.{exchange.upper()} not found")
+                            detail=f"Company {code}.{exchange} not found")
+    
+    if exchange_info is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
+                            detail=f"Exchange {exchange} is not supported")
 
+
+    company_info["timezone"] = exchange_info.get("timezone")
 
     return company_info
 

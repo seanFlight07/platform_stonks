@@ -1,4 +1,9 @@
+from numpy import insert
+from sqlalchemy import false
+
 from utils import logger as logger_utils
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 logger = logger_utils.setup_logger(__name__)
 
@@ -37,3 +42,14 @@ def validation(data):
         return False
 
     return True
+
+def is_black_out(exchange_info):
+    timezone = ZoneInfo(exchange_info["timezone"])
+    now = datetime.now(timezone)
+
+    if now.weekday() >=5:
+        return False
+    if exchange_info["blackout_start"] <= now.time() <= exchange_info["blackout_end"]:
+        return True
+    return False
+
