@@ -1,14 +1,16 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from requests import post, status_codes
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from utils import db, transforms, validation 
+from utils import db, transforms, validation, security
 from utils import logger as logger_utils
-from web.models import CompanyCreate, LoadCompanyData, SearchCompany
+from web.models import CompanyCreate, LoadCompanyData, SearchCompany, UserCreate, UserLogin
 from integrations import api_fetcher
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter()
 logger = logger_utils.setup_logger(__name__)
+bearer_scheme = HTTPBearer()
 #############################################################
 # Health check
 #############################################################
@@ -168,4 +170,95 @@ def search_company(code, exchange):
     company_info["timezone"] = exchange_info.get("timezone")
 
     return company_info
+#############################################################
+# Authentication functions
+#############################################################
+@router.post("/user/create-user", status_code=HTTP_201_CREATED)
+def create_user(user: UserCreate):
+    new_user = user.model_dump()
+    user_exist = db.get_user_by_email(new_user["email"])
 
+    if user_exist:
+        logger.warning("User already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="User already exists")
+    
+    password_hash = security.hash_password(new_user['password'])
+    create_new_user = db.create_user(new_user['email'],password_hash)
+
+    if create_new_user:
+        return{ "Detail": "New user successfully created"}
+
+
+@router.post("/user/login")
+def login(user: UserLogin):
+    current_user = user.model_dump()
+    user_exist = db.get_user_by_email(current_user["email"])
+    
+    if not user_exist:
+        raise HTTPException (status_code=status.HTTP_401_UNAUTHORIZED,
+                             detail="Invalid email or password"
+                             )
+
+    validate_password = security.verify_password(user_exist['password_hash'],current_user["password"])
+
+    if not validate_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid email or passowrd"
+                            )
+    access_token = security.create_access_token(user_exist["id"])
+
+    if not user_exist["active"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="User account is disabled")
+
+    return{
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    ):
+    token = credentials.credentials
+    user_id = security.decode_access_token(token)
+
+    if user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token")
+
+    user = db.get_user_by_id(user_id)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found")
+    if not user["active"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+        detail="User account is disabled")
+
+    return user
+
+def require_admin(
+    current_user = Depends(get_current_user)
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+
+    return current_user
+
+@router.get("/user/me")
+def get_me(current_user = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "role": current_user["role"]
+    }
+
+@router.post("/admin/example")
+def admin_example(
+    current_user = Depends(require_admin)
+):
+    return {"detail": "Admin access granted"}

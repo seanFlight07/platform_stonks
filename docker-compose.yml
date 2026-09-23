@@ -27,6 +27,8 @@ services:
       - ./web:/app/web
       - ./utils:/app/utils
       - ./integrations:/app/integrations
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
     command:
       [
       "uvicorn",

@@ -1,7 +1,7 @@
 import os
 from os.path import exists
 from fastapi import status
-from sqlalchemy import create_engine, text, Table, MetaData
+from sqlalchemy import Null, create_engine, result_tuple, text, Table, MetaData, true
 from dotenv import load_dotenv
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import result
@@ -310,3 +310,80 @@ def queue_job_failed(job_id):
     except Exception:
         logger.warning("Failed to mark job %s as FAILED",job_id)
         raise
+
+################################################################
+# User functions
+################################################################
+def get_user_by_email(email):
+    query = text("""
+        SELECT id, email, password_hash, role, active
+        FROM users
+        WHERE email = :email
+    """)
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query,{"email": email})
+            user = result.mappings().fetchone()
+            if user:
+                logger.info("User was found with email %s",email)
+                return user
+            logger.info("No user was found with email %s",email)
+            return None
+    except Exception:
+        logger.warning("Failed to get user by email: %s",email)
+        raise
+
+def get_user_by_id(id):
+    query = text("""
+        SELECT id, email, password_hash, role, active
+        FROM users
+        WHERE id = :id
+    """)
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query,{"id": id})
+            user = result.mappings().fetchone()
+            if user:
+                logger.info("User was found with id %s exists",id)
+                return user
+            logger.info("User was not found with id %s",id)
+            return None
+    except Exception:
+        logger.warning("Failed to get user by id: %s",id)
+        raise
+
+def create_user(email,password_hash):
+    try:
+        query = text("""
+            INSERT INTO users (email, password_hash)
+            VALUES (:email, :password_hash)
+                 """)
+
+        user = get_user_by_email(email)
+        with engine.begin() as connection:
+            if not user:    
+                connection.execute(query,{"email": email, "password_hash": password_hash})
+                logger.info("User added with email %s",email)
+                return user
+            return None
+    except Exception:
+        logger.exception("Could not insert ueser with email %s",email)
+        raise
+
+
+
+
+
+def main():
+    email = "test02@example.com"
+    fake_hash = "FAKE_PASSWORD_HASH"
+
+    #print("Creating user...")
+    user = get_user_by_email(email)
+    print(user)
+
+
+
+if __name__ == "__main__":
+    main()
+

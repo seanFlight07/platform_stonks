@@ -1,4 +1,6 @@
 pandas==3.0.5
 SQLAlchemy==2.0.54
 python-dotenv==1.2.3
-
+argon2-cffi==25.1.0
+argon2-cffi-bindings==26.1.0
+argon2==0.1.10

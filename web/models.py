@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 class CompanyCreate(BaseModel):
     code: str
@@ -33,6 +33,11 @@ class LoadCompanyData(BaseModel):
     long_name: str
     active: bool
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
 
-
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
