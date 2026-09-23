@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import { useAuth } from '../context/AuthContext';
 
 
 function AddCompany() {
@@ -8,7 +9,7 @@ function AddCompany() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const { token } = useAuth();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>){
     event.preventDefault();
@@ -18,11 +19,16 @@ function AddCompany() {
     setLoading(true);
 
     try {
-    const response = await fetch(`http://localhost:8000/companie-search/${code}.${exchange}`);
-
-    const data = await response.json();
+      const response = await fetch(`http://localhost:8000/companie-search/${code}.${exchange}`,
+        {
+          method: "POST",
+          headers:{
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      const data = await response.json();
     
-    if (!response.ok){
+      if (!response.ok){
         setError(data.detail);
         return;
       }

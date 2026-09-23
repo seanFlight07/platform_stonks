@@ -7,6 +7,9 @@ import {getCompanies, getPrices} from './services/api'
 import PriceDisplay from './components/PriceDisplay'
 import PriceChart from './components/PriceChart'
 import AddCompany from './components/AddCompany'
+import Login from './components/Login'
+import { useAuth } from './context/AuthContext'
+
 
 function App() {
   const [selectedCompany, setSelectedCompany] = useState("")
@@ -14,7 +17,7 @@ function App() {
   const [prices, setPrices] = useState<Price[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  const { user, logout } = useAuth();
 
 
   useEffect(() =>{
@@ -28,7 +31,7 @@ function App() {
     if (!selectedCompany){
       return
     }
-
+    
     async function loadPrices(){
       try{
         setLoading(true)
@@ -44,7 +47,7 @@ function App() {
       }
       finally {
       setLoading(false)
-    }
+      }
     }loadPrices()
   },[selectedCompany])
 
@@ -68,7 +71,20 @@ function App() {
                 <PriceChart prices={prices} />
               </>
               )}
-            <AddCompany />
+              {user?.role === "admin" && (
+                <AddCompany />
+              )}
+          {!user ? (
+          <Login />
+          ) : (
+          <div>
+            <p>Logged in as: {user.email}</p>
+            <p>Role: {user.role}</p>
+            <button onClick={logout}>
+              Logout
+            </button>
+          </div>
+            )}
         </main>
     )
 }
