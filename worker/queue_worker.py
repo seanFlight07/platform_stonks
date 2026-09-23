@@ -77,3 +77,6 @@ def process_pending_jobs():
             )
 
             db.queue_job_failed(job["id"])
+
+if __name__ == "__main__":
+   process_pending_jobs()
