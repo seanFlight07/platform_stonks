@@ -6,6 +6,7 @@ import type { Price } from './types/price'
 import {getCompanies, getPrices} from './services/api'
 import PriceDisplay from './components/PriceDisplay'
 import PriceChart from './components/PriceChart'
+import AddCompany from './components/AddCompany'
 
 function App() {
   const [selectedCompany, setSelectedCompany] = useState("")
@@ -67,7 +68,7 @@ function App() {
                 <PriceChart prices={prices} />
               </>
               )}
-
+            <AddCompany />
         </main>
     )
 }
