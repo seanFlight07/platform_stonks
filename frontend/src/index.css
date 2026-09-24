@@ -16,17 +16,51 @@ body {
 }
 
 .header {
-  margin-bottom: 32px;
+  width: 100%;
+  min-height: 80px;
+  padding: 16px 32px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.header h1 {
+.header-brand h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 
-.header p {
-  margin-top: 8px;
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-role {
   color: #667085;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.header-auth button {
+  padding: 8px 16px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.header-auth button:hover {
+  background: #f8fafc;
 }
 
 .card {
@@ -36,15 +70,42 @@ body {
   margin-bottom: 24px;
 }
 
-.company-selector h2 {
-  margin-top: 0;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header p {
+  margin: 6px 0 0;
+  color: #667085;
 }
 
 .company-selector select {
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
   padding: 10px 12px;
+
   font-size: 1rem;
+
+  background: white;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+}
+
+.company-selector select:focus {
+  outline: 2px solid #667085;
+  outline-offset: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #667085;
 }
 
 .price-header {
@@ -85,25 +146,39 @@ body {
   font-size: 1.25rem;
 }
 
+.chart-card h2 {
+  margin: 0;
+}
+
+.chart-header {
+  margin-bottom: 24px;
+}
+
+.chart-header p {
+  margin: 6px 0 0;
+  color: #667085;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+}
+
 @media (max-width: 700px) {
   .dashboard {
     padding: 16px;
   }
 
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .company-selector select {
+    max-width: none;
+  }
+
   .price-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-.chart-card h2 {
-  margin-top: 0;
-  margin-bottom: 24px;
-}
-
-.positive {
-  color: #16803c;
-}
-
-.negative {
-  color: #c62828;
 }

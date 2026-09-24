@@ -5,8 +5,12 @@ interface PriceDisplayProps {
 }
 
 function PriceDisplay({prices}: PriceDisplayProps){
-  if (prices.length === 0){
-    return <p>No data has been loaded.</p>
+  if (prices.length === 0) {
+    return (
+      <section className="card empty-state">
+        <p>Select a company to view its latest market data.</p>
+      </section>
+    );
   }
   const latestPrice = prices[0]
   const changeClass = latestPrice.change_pct >= 0 ? "positive" : "negative"

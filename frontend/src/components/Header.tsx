@@ -1,15 +1,37 @@
+import Login from "./Login";
+import { useAuth } from "../context/AuthContext";
+
 interface HeaderProps {
-  title: string
-  subtitle: string
+  title: string;
 }
 
+function Header(props: HeaderProps) {
+  const { user, logout } = useAuth();
 
-function Header(props: HeaderProps){
-  return(
+  return (
     <header className="header">
-      <h1>{props.title}</h1>
-      <p>{props.subtitle}</p>
+      <div className="header-brand">
+        <h1>{props.title}</h1>
+      </div>
+
+      <div className="header-auth">
+        {!user ? (
+          <Login />
+        ) : (
+          <>
+            <div className="user-details">
+              <span>{user.email}</span>
+              <span className="user-role">{user.role}</span>
+            </div>
+
+            <button onClick={logout}>
+              Logout
+            </button>
+          </>
+        )}
+      </div>
     </header>
-  )
+  );
 }
-export  default Header
+
+export default Header;
