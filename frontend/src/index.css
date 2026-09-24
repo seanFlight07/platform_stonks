@@ -182,3 +182,165 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.brand-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.header-link {
+  color: #1f2933;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.header-link:hover {
+  text-decoration: underline;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #667085;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.admin-section {
+  margin-bottom: 0;
+}
+
+.admin-section > h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.company-search-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 10px 12px;
+
+  font-size: 1rem;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+}
+
+.form-field input:focus {
+  outline: 2px solid #667085;
+  outline-offset: 2px;
+}
+
+.company-search-form button,
+.company-result button {
+  padding: 10px 16px;
+
+  border: 0;
+  border-radius: 6px;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.company-search-form button:disabled,
+.company-result button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.company-result {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.company-result h3 {
+  margin: 0;
+}
+
+.company-code {
+  margin: 6px 0 20px;
+  color: #667085;
+}
+
+.company-result-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin-bottom: 20px;
+}
+
+.company-result-details span {
+  color: #667085;
+}
+
+.success-message {
+  margin-top: 16px;
+  color: #16803c;
+}
+
+.error-message {
+  margin-top: 16px;
+  color: #c62828;
+}
+
+.company-search-form button,
+.company-result button,
+.create-user-form button {
+  padding: 10px 16px;
+
+  border: 0;
+  border-radius: 6px;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.company-search-form button:disabled,
+.company-result button:disabled,
+.create-user-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.create-user-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}

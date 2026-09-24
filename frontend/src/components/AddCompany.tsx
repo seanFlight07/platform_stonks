@@ -1,127 +1,159 @@
-import {useState} from 'react';
-import { useAuth } from '../context/AuthContext';
-
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { searchCompany, addCompany } from "../services/api";
+import type { CompanySearchResult } from "../types/company";
 
 function AddCompany() {
   const [code, setCode] = useState("");
   const [exchange, setExchange] = useState("");
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<CompanySearchResult | null>(null);
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+
   const { token } = useAuth();
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>){
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setMessage("");
     setError("");
     setCompany(null);
-    setLoading(true);
+    setSearching(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/companie-search/${code}.${exchange}`,
-        {
-          method: "POST",
-          headers:{
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      const data = await response.json();
-    
-      if (!response.ok){
-        setError(data.detail);
-        return;
-      }
-    setCompany(data);
+      const company = await searchCompany(
+        code,
+        exchange,
+        token
+      );
 
-    }catch{
-      setError("Unable to connect to server");
-    }finally{
-      setLoading(false);
+      setCompany(company);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Unable to connect to server");
+      }
+    } finally {
+      setSearching(false);
     }
   }
 
-  async function handleAddCompany(){
-    if(!company){
+  async function handleAddCompany() {
+    if (!company) {
       return;
     }
+
     setMessage("");
     setError("");
-    setLoading(true);
-    try{
-      const response = await fetch(
-        `http://localhost:8000/companies/load/?code=${company.code}&exchange=${company.exchange}`,
-        {method: "POST",}
+    setAdding(true);
+
+    try {
+      const message = await addCompany(
+        company,
+        token
       );
-      const data = await response.json();
-    
-      if(!response.ok){
-        setError(data.detail);
-        return;
+
+      setMessage(message);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Unable to connect to server");
       }
-      setMessage(data.detail);
-    }catch {
-      setError("Unable to connect to server");
-    }finally{
-      setLoading(false);
+    } finally {
+      setAdding(false);
     }
   }
 
-
-interface Company {
-  code: string;
-  exchange: string;
-  long_name: string;
-  sector: string;
-  timezone: string;
-  open: number;
-  day_high: number;
-  day_low: number;
-  previous_close: number;
-}
-
-
   return (
-    <div>
-      <h2>Add Company</h2>
+    <div className="add-company">
+      <form
+        className="company-search-form"
+        onSubmit={handleSubmit}
+      >
+        <div className="form-field">
+          <label htmlFor="company-code">
+            Company code
+          </label>
 
-      <form onSubmit={handleSubmit}>
-        <label>
-          Company code
-          <input type="text" 
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
+          <input
+            id="company-code"
+            type="text"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            placeholder="e.g. CBA"
+            required
           />
-        </label>
+        </div>
 
-        <label>
-          Exchange
-          <input type="text" 
-          value={exchange}
-          onChange={(event) => setExchange(event.target.value)}/>
-        </label>
+        <div className="form-field">
+          <label htmlFor="exchange">
+            Exchange
+          </label>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Searching...": "Search"}
+          <input
+            id="exchange"
+            type="text"
+            value={exchange}
+            onChange={(event) => setExchange(event.target.value)}
+            placeholder="e.g. AX"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={searching}
+        >
+          {searching ? "Searching..." : "Search"}
         </button>
       </form>
+
       {company && (
-      <div>
-        <h3>{company.long_name}</h3>
-          <p>{company.code}.{company.exchange}</p>
-          <p>Sector: {company.sector}</p>
-          <p>Previous close: {company.previous_close}</p>
-          
-          <button type='button' onClick={handleAddCompany} disabled={loading}>
-            {loading ? "Adding...": "Add Company"}
+        <div className="company-result">
+          <div>
+            <h3>{company.long_name}</h3>
+
+            <p className="company-code">
+              {company.code}.{company.exchange}
+            </p>
+          </div>
+
+          <div className="company-result-details">
+            <span>Sector</span>
+            <strong>{company.sector}</strong>
+
+            <span>Previous close</span>
+            <strong>
+              ${company.previous_close.toFixed(2)}
+            </strong>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddCompany}
+            disabled={adding}
+          >
+            {adding ? "Adding..." : "Add Company"}
           </button>
-      </div>
+        </div>
       )}
-      {message &&(
-        <p>{message}</p>
+
+      {message && (
+        <p className="success-message">
+          {message}
+        </p>
       )}
-      {error &&(
-        <p>{error}</p>
+
+      {error && (
+        <p className="error-message">
+          {error}
+        </p>
       )}
     </div>
   );
