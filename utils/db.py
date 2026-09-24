@@ -352,22 +352,32 @@ def get_user_by_id(id):
         logger.warning("Failed to get user by id: %s",id)
         raise
 
-def create_user(email,password_hash):
+def create_user(email, password_hash):
     try:
         query = text("""
             INSERT INTO users (email, password_hash)
             VALUES (:email, :password_hash)
-                 """)
+        """)
 
         user = get_user_by_email(email)
+
+        if user:
+            return False
+
         with engine.begin() as connection:
-            if not user:    
-                connection.execute(query,{"email": email, "password_hash": password_hash})
-                logger.info("User added with email %s",email)
-                return user
-            return None
+            connection.execute(
+                query,
+                {
+                    "email": email,
+                    "password_hash": password_hash
+                }
+            )
+
+        logger.info("User added with email %s", email)
+        return True
+
     except Exception:
-        logger.exception("Could not insert ueser with email %s",email)
+        logger.exception("Could not insert user with email %s", email)
         raise
 
 

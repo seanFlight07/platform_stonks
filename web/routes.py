@@ -38,7 +38,7 @@ def create_user(user: UserCreate):
     create_new_user = db.create_user(new_user['email'],password_hash)
 
     if create_new_user:
-        return{ "Detail": "New user successfully created"}
+        return{ "detail": "New user successfully created"}
 
 
 @router.post("/user/login")
