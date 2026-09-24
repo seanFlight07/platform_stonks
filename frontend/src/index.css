@@ -1,3 +1,5 @@
+/* ---------- Base ---------- */
+
 * {
   box-sizing: border-box;
 }
@@ -9,11 +11,31 @@ body {
   color: #1f2933;
 }
 
+button,
+input,
+select {
+  font: inherit;
+}
+
+
+/* ---------- Layout ---------- */
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px;
 }
+
+.card {
+  margin-bottom: 24px;
+  padding: 24px;
+
+  background: white;
+  border-radius: 8px;
+}
+
+
+/* ---------- Header ---------- */
 
 .header {
   width: 100%;
@@ -33,10 +55,25 @@ body {
   font-size: 1.75rem;
 }
 
+.brand-link {
+  color: inherit;
+  text-decoration: none;
+}
+
 .header-auth {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.header-link {
+  color: #1f2933;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.header-link:hover {
+  text-decoration: underline;
 }
 
 .user-details {
@@ -51,24 +88,78 @@ body {
   text-transform: capitalize;
 }
 
-.header-auth button {
-  padding: 8px 16px;
-  border: 1px solid #d0d5dd;
+
+/* ---------- Buttons ---------- */
+
+button {
+  padding: 10px 16px;
+
+  border: 0;
   border-radius: 6px;
-  background: white;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
   cursor: pointer;
 }
 
-.header-auth button:hover {
+button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.header-auth button {
+  padding: 8px 16px;
+
+  background: white;
+  border: 1px solid #d0d5dd;
+}
+
+.header-auth button:hover:not(:disabled) {
   background: #f8fafc;
 }
 
-.card {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+
+/* ---------- Forms ---------- */
+
+.company-search-form,
+.create-user-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
 }
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 10px 12px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+}
+
+.form-field input:focus,
+.company-selector select:focus {
+  outline: 2px solid #667085;
+  outline-offset: 2px;
+}
+
+
+/* ---------- Dashboard ---------- */
 
 .section-header {
   display: flex;
@@ -91,16 +182,9 @@ body {
   max-width: 320px;
   padding: 10px 12px;
 
-  font-size: 1rem;
-
   background: white;
   border: 1px solid #d0d5dd;
   border-radius: 6px;
-}
-
-.company-selector select:focus {
-  outline: 2px solid #667085;
-  outline-offset: 2px;
 }
 
 .empty-state {
@@ -108,10 +192,14 @@ body {
   color: #667085;
 }
 
+
+/* ---------- Price Display ---------- */
+
 .price-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   margin-bottom: 20px;
 }
 
@@ -131,6 +219,7 @@ body {
 
 .metric {
   padding: 16px;
+
   background: #f8fafc;
   border-radius: 6px;
 }
@@ -138,6 +227,7 @@ body {
 .metric span {
   display: block;
   margin-bottom: 8px;
+
   color: #667085;
   font-size: 0.875rem;
 }
@@ -145,6 +235,17 @@ body {
 .metric strong {
   font-size: 1.25rem;
 }
+
+.positive {
+  color: #16803c;
+}
+
+.negative {
+  color: #c62828;
+}
+
+
+/* ---------- Chart ---------- */
 
 .chart-card h2 {
   margin: 0;
@@ -164,39 +265,8 @@ body {
   height: 400px;
 }
 
-@media (max-width: 700px) {
-  .dashboard {
-    padding: 16px;
-  }
 
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .company-selector select {
-    max-width: none;
-  }
-
-  .price-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.brand-link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.header-link {
-  color: #1f2933;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.header-link:hover {
-  text-decoration: underline;
-}
+/* ---------- Admin ---------- */
 
 .page-header {
   margin-bottom: 24px;
@@ -225,66 +295,13 @@ body {
   margin-top: 0;
 }
 
-@media (max-width: 700px) {
-  .admin-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
-.company-search-form {
-  display: grid;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-field label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.form-field input {
-  width: 100%;
-  padding: 10px 12px;
-
-  font-size: 1rem;
-
-  border: 1px solid #d0d5dd;
-  border-radius: 6px;
-}
-
-.form-field input:focus {
-  outline: 2px solid #667085;
-  outline-offset: 2px;
-}
-
-.company-search-form button,
-.company-result button {
-  padding: 10px 16px;
-
-  border: 0;
-  border-radius: 6px;
-
-  font-size: 0.95rem;
-  font-weight: 500;
-
-  cursor: pointer;
-}
-
-.company-search-form button:disabled,
-.company-result button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
+/* ---------- Company Search ---------- */
 
 .company-result {
   margin-top: 24px;
   padding-top: 24px;
+
   border-top: 1px solid #e5e7eb;
 }
 
@@ -301,12 +318,12 @@ body {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px 16px;
+
   margin-bottom: 20px;
 }
 
-.company-result-details span {
-  color: #667085;
-}
+
+/* ---------- Messages ---------- */
 
 .success-message {
   margin-top: 16px;
@@ -318,29 +335,37 @@ body {
   color: #c62828;
 }
 
-.company-search-form button,
-.company-result button,
-.create-user-form button {
-  padding: 10px 16px;
 
-  border: 0;
-  border-radius: 6px;
+/* ---------- Responsive ---------- */
 
-  font-size: 0.95rem;
-  font-weight: 500;
+@media (max-width: 700px) {
+  .dashboard {
+    padding: 16px;
+  }
 
-  cursor: pointer;
-}
+  .header {
+    padding: 16px;
+    gap: 16px;
+  }
 
-.company-search-form button:disabled,
-.company-result button:disabled,
-.create-user-form button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
+  .header-auth {
+    gap: 8px;
+  }
 
-.create-user-form {
-  display: grid;
-  gap: 16px;
-  margin-top: 24px;
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .company-selector select {
+    max-width: none;
+  }
+
+  .price-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
 }
