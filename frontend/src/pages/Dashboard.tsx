@@ -24,7 +24,6 @@ function Dashboard() {
 
   useEffect(() => {
     if (!selectedCompany) {
-      setPrices([]);
       return;
     }
 
@@ -46,7 +45,9 @@ function Dashboard() {
 
     loadPrices();
   }, [selectedCompany]);
-
+  
+  const displayedPrices = selectedCompany ? prices : [];
+  
   return (
     <main className="dashboard">
       <CompanySelector
@@ -61,8 +62,8 @@ function Dashboard() {
 
       {!loading && !error && (
         <>
-          <PriceDisplay prices={prices} />
-          <PriceChart prices={prices} />
+          <PriceDisplay prices={displayedPrices} />
+          <PriceChart prices={displayedPrices} />
         </>
       )}
     </main>

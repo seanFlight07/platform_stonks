@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { searchCompany, addCompany } from "../services/api";
 import type { CompanySearchResult } from "../types/company";
 

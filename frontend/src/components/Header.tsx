@@ -1,5 +1,5 @@
 import Login from "./Login";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { Link } from "react-router-dom";
 
 interface HeaderProps {

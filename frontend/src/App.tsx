@@ -8,7 +8,8 @@ import {
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./hooks/useAuth";
+
 
 function App() {
   const { user } = useAuth();

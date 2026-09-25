@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
+
 import { createUser } from "../services/api";
 
 function CreateUser() {
