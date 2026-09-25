@@ -188,19 +188,6 @@ def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
     # Check whether we can ingest now
     black_out_validation = validation.is_black_out(exchange_info)
 
-    if black_out_validation:
-        queued = db.insert_into_queue(code, exchange)
-
-        if not queued:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Company {code}.{exchange} could not be queued"
-            )
-
-        return {
-            "detail": f"Company {code}.{exchange} has been queued"
-        }
-
     # No blackout - insert immediately
     insert_data = db.insert_company(transformed_company)
 
@@ -211,7 +198,7 @@ def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
         )
 
     # Fetch historical prices
-    price_data = api_fetcher.api_fetch_stock_history(code, exchange)
+    price_data = api_fetcher.api_fetch_stock_history(code, exchange,blackout=black_out_validation)
     price_data = transforms.transform_api_historical(price_data, code)
 
     if not validation.validation(price_data):

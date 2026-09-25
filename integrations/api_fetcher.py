@@ -1,5 +1,6 @@
 from enum import unique
-
+from datetime import date
+from pandas.core.base import ensure_wrapped_if_datetimelike
 from sqlalchemy.engine import result
 import yfinance as yf
 from utils.logger import setup_logger
@@ -19,10 +20,14 @@ def api_fetch_stock(ticker, exchange):
         raise
     return data
 
-def api_fetch_stock_history(ticker, exchange):
+def api_fetch_stock_history(ticker, exchange, blackout=False):
     unique_code = str(ticker+"."+exchange)
     try:
-        data = yf.download(unique_code,period='2y')
+        if blackout:
+            data= yf.download(unique_code, period='2y', end=date.today())
+        else:
+            data = yf.download(unique_code,period='2y')
+
         if data.empty:
             logger.warning("No data was pulled back for %s", unique_code)
             return data
@@ -55,18 +60,4 @@ def api_search_company(code,exchange):
         logger.exception("failed to get any data from yfinance for %s",unique_code)
         raise
     return company_info
-
-
-def main():
-    ticker = "CCP"
-    exchange = "AX"
-    results = yf.Market("ASIA")
-    status = results.status
-    summary = results.summary
-    print(status)
-    print(summary)
-
-
-if __name__ == "__main__":
-    main()
 
