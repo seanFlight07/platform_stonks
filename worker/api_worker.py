@@ -1,8 +1,8 @@
 from integrations import api_fetcher
 from utils import db, transforms, validation
-from utils import logger as logger_utils
+from utils.logger import setup_logger
 
-logger = logger_utils.setup_logger(__name__)
+logger = setup_logger(__name__)
 
 def main():
     companies = db.get_active_companies()
@@ -13,17 +13,16 @@ def main():
     logger.info("Starting Worker | Processing %s companies",len(companies))
     for company in companies:
         try:
-            print(company["code"])
             prices = api_fetcher.api_fetch_stock(company["code"],company["exchange"])
             
-            if prices.empty:
+            if prices is None or prices.empty:
                 skipped += 1
                 continue
 
             last_price = last_prices.get(company["code"])
             
             if last_price is None:
-                logger.warning("No preivous price was returned for %s",company["code"])
+                logger.warning("No previous price was returned for %s",company["code"])
                 skipped += 1
                 continue
             

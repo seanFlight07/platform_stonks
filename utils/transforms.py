@@ -1,6 +1,3 @@
-from utils import db
-from integrations import api_fetcher
-import pandas as pd
 
 def add_code(data,code):
     data["code"] = code

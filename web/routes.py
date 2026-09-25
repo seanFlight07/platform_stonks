@@ -1,11 +1,16 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from requests import post, status_codes
-from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from utils import db, transforms, validation, security
-from utils import logger as logger_utils
-from web.models import CompanyCreate, LoadCompanyData, SearchCompany, UserCreate, UserLogin
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND
+
 from integrations import api_fetcher
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils import db, security, transforms, validation
+from utils import logger as logger_utils
+from web.models import (
+    CompanyCreate,
+    SearchCompany,
+    UserCreate,
+    UserLogin,
+)
 
 router = APIRouter()
 logger = logger_utils.setup_logger(__name__)
@@ -139,7 +144,7 @@ def post_company(company: CompanyCreate):
                             detail=f"Company {company.code} already exists in db")
 
 @router.post("/companies/{code}/prices", status_code=status.HTTP_201_CREATED)
-def post_prices(code: str):
+def post_prices(code: str, current_user=Depends(require_admin)):
     company = db.get_company(code)
     if company is None:
         logger.warning("Company %s does not exist in db", code)

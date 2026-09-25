@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
 load_dotenv()
 database_user = os.environ["POSTGRES_USER"]

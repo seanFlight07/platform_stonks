@@ -1,8 +1,7 @@
-from enum import unique
-from datetime import date
-from pandas.core.base import ensure_wrapped_if_datetimelike
-from sqlalchemy.engine import result
+from datetime import UTC, datetime
+
 import yfinance as yf
+
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -11,7 +10,7 @@ def api_fetch_stock(ticker, exchange):
     unique_code = str(ticker+"."+exchange)
     try:
         data = yf.download(unique_code,period='1d')
-        if data.empty:
+        if data is None or data.empty:
             logger.warning("No data was pulled back for %s", unique_code)
             return data
         logger.info("Data has been fetched for %s", unique_code)
@@ -24,11 +23,11 @@ def api_fetch_stock_history(ticker, exchange, blackout=False):
     unique_code = str(ticker+"."+exchange)
     try:
         if blackout:
-            data= yf.download(unique_code, period='2y', end=date.today())
+            data= yf.download(unique_code, period='2y', end=datetime.now(UTC).date())
         else:
             data = yf.download(unique_code,period='2y')
 
-        if data.empty:
+        if data is None or data.empty:
             logger.warning("No data was pulled back for %s", unique_code)
             return data
         logger.info("Data has been fetched for %s", unique_code)

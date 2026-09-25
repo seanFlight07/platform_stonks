@@ -1,9 +1,11 @@
-import pandas as pd
-from database.connection import engine
-from sqlalchemy import MetaData, Table, text
-from sqlalchemy.dialects.postgresql import insert
 from pathlib import Path
-from utils import db, transforms
+
+import pandas as pd
+from sqlalchemy import text
+
+from utils import db
+
+
 #veridication helpers
 def get_required_input(prompt):
     while True:

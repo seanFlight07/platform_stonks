@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from web.routes import router
 from fastapi.middleware.cors import CORSMiddleware
+
+from web.routes import router
 
 app = FastAPI(
     title = "Platform Stonks API"

@@ -1,17 +1,19 @@
 import os
-from os.path import exists
-from fastapi import status
-from sqlalchemy import Null, create_engine, result_tuple, text, Table, MetaData, true
+
 from dotenv import load_dotenv
+from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.engine import result
-from yfinance.screener import query
+
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL is None:
+    raise RuntimeError("DATABASE_URL env is not set")
+
 engine = create_engine(DATABASE_URL)
 
 def check_db():

@@ -1,11 +1,12 @@
-from typing_extensions import runtime
+import os
+from datetime import datetime, timedelta, timezone
+
+import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-import os
-import jwt
-from datetime import datetime, timedelta, timezone
 from jwt.exceptions import InvalidTokenError
-from utils import logger
+
+from utils.logger import setup_logger
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
@@ -13,12 +14,12 @@ JWT_ALGORITHM = "HS256"
 if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET env variable is not set")
 
-logger = logger.setup_logger(__name__)
+logger = setup_logger(__name__)
 ph = PasswordHasher()
 
 def hash_password(password):
-    passwordrd_hash = ph.hash(password)
-    return passwordrd_hash
+    passworded_hash = ph.hash(password)
+    return passworded_hash
 
 def verify_password(password_hash, password):
     try:

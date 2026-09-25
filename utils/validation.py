@@ -1,9 +1,8 @@
-from numpy import insert
-from sqlalchemy import false
 
-from utils import logger as logger_utils
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from utils import logger as logger_utils
 
 logger = logger_utils.setup_logger(__name__)
 
@@ -38,8 +37,8 @@ def validation(data):
             logger.warning("Column %s has missing data.",col_name)
             errors += 1
 
-    if errors > 0:
-        return False
+    if  errors > 0:
+        return errors == 0
 
     return True
 
@@ -49,7 +48,9 @@ def is_black_out(exchange_info):
 
     if now.weekday() >=5:
         return False
-    if exchange_info["blackout_start"] <= now.time() <= exchange_info["blackout_end"]:
-        return True
-    return False
+    return (
+            exchange_info["blackout_start"] 
+            <= now.time() 
+            <= exchange_info["blackout_end"]
+    )
 
