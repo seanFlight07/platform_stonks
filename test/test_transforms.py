@@ -1,4 +1,3 @@
-from unittest import result
 
 import pandas as pd
 
@@ -79,3 +78,12 @@ def test_transform_api_data():
         code="CCP",
         last_close=10.0,
     )
+
+    assert result["code"].iloc[0] == "CCP"
+    assert result["open"].iloc[0] == 10.0
+    assert result["high"].iloc[0] == 13.0
+    assert result["low"].iloc[0] == 9.0
+    assert result["close"].iloc[0] == 12.0
+    assert result["volume"].iloc[0] == 1000
+    assert result["change_dollar"].iloc[0] == 2.0
+    assert result["change_pct"].iloc[0] == 20.0

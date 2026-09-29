@@ -1,10 +1,10 @@
-from datetime import date, datetime
-from unittest import result
+from datetime import datetime
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
-import utils
 from utils.validation import is_black_out, validation
 
+SYDNEY = ZoneInfo("Australia/Sydney")
 
 def test_validation_valid_data(valid_price_data):
 
@@ -34,7 +34,7 @@ def test_validation_missing_value(valid_price_data):
     assert result is False
 
 def test_blackout_during_weekday(exchange_info):
-    fake_now = datetime(2026, 9, 30, 12, 0)
+    fake_now = datetime(2026, 9, 30, 12, 0, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now
@@ -44,7 +44,7 @@ def test_blackout_during_weekday(exchange_info):
     assert result is True
 
 def test_blackout_before_time_weekday(exchange_info):
-    fake_now = datetime(2026, 9, 30, 7,0)
+    fake_now = datetime(2026, 9, 30, 7,0, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now
@@ -54,7 +54,7 @@ def test_blackout_before_time_weekday(exchange_info):
     assert result is False
 
 def test_blackout_after_time_weekday(exchange_info):
-    fake_now = datetime(2026, 9, 30, 23, 0)
+    fake_now = datetime(2026, 9, 30, 23, 0, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now
@@ -64,7 +64,7 @@ def test_blackout_after_time_weekday(exchange_info):
         assert result is False
 
 def test_blackout_weekend(exchange_info):
-    fake_now = datetime(2026, 9, 26, 12, 0)
+    fake_now = datetime(2026, 9, 26, 12, 0, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now
@@ -74,7 +74,7 @@ def test_blackout_weekend(exchange_info):
     assert result is False
 
 def test_blackout_at_exact_start(exchange_info):
-    fake_now = datetime(2026, 9, 30, 8, 30)
+    fake_now = datetime(2026, 9, 30, 8, 30, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now
@@ -84,7 +84,7 @@ def test_blackout_at_exact_start(exchange_info):
     assert result is True
 
 def test_blackout_at_exact_end(exchange_info):
-    fake_now = datetime(2026, 9, 30, 18, 0)
+    fake_now = datetime(2026, 9, 30, 18, 0, tzinfo=SYDNEY)
 
     with patch("utils.validation.datetime") as mock_datetime:
         mock_datetime.now.return_value = fake_now

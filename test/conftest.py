@@ -5,9 +5,10 @@ os.environ.setdefault(
     "test-secret-key-for-platform-stonks"
 )
 
+from datetime import time
+
 import pandas as pd
 import pytest
-from datetime import time
 from fastapi.testclient import TestClient
 
 from web.main import app

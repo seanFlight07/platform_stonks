@@ -1,9 +1,8 @@
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from unittest.mock import patch
-from web.main import app
 
+from web.main import app
 
 client = TestClient(app)
 
@@ -173,10 +172,8 @@ def test_get_me_success(client):
     }
 
 def test_get_me_invalid_token(client):
-    with (
-        patch("web.routes.security.decode_access_token") as mock_decode,
-        patch("web.routes.db.get_user_by_id") as mock_get_user,
-    ):
+    with patch(
+        "web.routes.security.decode_access_token") as mock_decode:
         mock_decode.return_value = None
 
         response = client.get(

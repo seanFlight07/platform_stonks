@@ -11,6 +11,7 @@ from utils.security import (
     verify_password,
 )
 
+
 def test_hash_password():
     password = "TestPassword123!"
 
