@@ -60,7 +60,7 @@ def login(user: UserLogin):
 
     if not validate_password:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid email or passowrd"
+                            detail="Invalid email or password"
                             )
     access_token = security.create_access_token(user_exist["id"])
 
@@ -118,10 +118,7 @@ def get_me(current_user = Depends(get_current_user)):
 #############################################################
 @router.get("/companies")
 def get_companies():
-    companies = db.get_all_companies()
-    if not companies:
-        raise HTTPException(status_code=status.HTTP_200_OK, detail="No companies found")
-    return companies
+    return db.get_all_companies()
 
 @router.get("/companies/{code}/prices")
 def get_price(code: str):
