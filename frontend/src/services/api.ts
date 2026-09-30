@@ -40,7 +40,7 @@ export async function searchCompany(
   token: string | null
 ): Promise<CompanySearchResult> {
   const response = await fetch(
-    `${API_URL}/companie-search/${code}.${exchange}`,
+    `${API_URL}/company-search/${code}.${exchange}`,
     {
       method: "GET",
       headers: {

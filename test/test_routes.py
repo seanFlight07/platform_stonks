@@ -348,7 +348,7 @@ def test_search_company_success(client):
             "timezone": "Australia/Sydney"
         }
 
-        response = client.get("/companie-search/ccp.ax")
+        response = client.get("/company-search/ccp.ax")
 
     assert response.status_code == 200
 
@@ -374,7 +374,7 @@ def test_search_company_not_found(client):
             "timezone": "Australia/Sydney"
         }
 
-        response = client.get("/companie-search/ccp.ax")
+        response = client.get("/company-search/ccp.ax")
 
     assert response.status_code == 404
     assert response.json() == {
@@ -399,7 +399,7 @@ def test_search_company_unsupported_exchange(client):
 
         mock_exchange.return_value = None
 
-        response = client.get("/companie-search/ccp.ax")
+        response = client.get("/company-search/ccp.ax")
 
     assert response.status_code == 404
     assert response.json() == {

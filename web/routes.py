@@ -226,7 +226,7 @@ def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
 #############################################################
 # GET functions from yfinance
 #############################################################
-@router.get("/companie-search/{code}.{exchange}", response_model=SearchCompany)
+@router.get("/company-search/{code}.{exchange}", response_model=SearchCompany)
 def search_company(code, exchange):
     code = code.upper()
     exchange = exchange.upper()
