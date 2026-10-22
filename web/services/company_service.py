@@ -1,6 +1,7 @@
-from utils import db, transforms, validation
 from integrations import api_fetcher
+from utils import db, transforms, validation
 from web.services import price_service
+
 
 def get_company():
     return db.get_all_companies()
@@ -55,7 +56,7 @@ def onboard_company(code: str, exchange: str):
         return None, "company_exists"
 
     # 6. Load historical prices
-    company, error = price_service.load_historical_prices(code,blackout=blackout)
+    _, error = price_service.load_historical_prices(code,blackout=blackout)
 
     if error:
         return None, error

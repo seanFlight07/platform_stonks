@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
-from integrations import api_fetcher
-from utils import db, security, transforms, validation
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer
+from starlette.status import HTTP_201_CREATED
+
+from utils import db
 from utils import logger as logger_utils
+from web.dependencies.auth import get_current_user, require_admin
 from web.models import (
     CompanyCreate,
     SearchCompany,
     UserCreate,
     UserLogin,
 )
-from web.services import company_service, price_service
+from web.services import auth_service, company_service, price_service
 
 router = APIRouter()
 logger = logger_utils.setup_logger(__name__)
@@ -32,79 +33,31 @@ def health():
 #############################################################
 @router.post("/user/create-user", status_code=HTTP_201_CREATED)
 def create_user(user: UserCreate):
-    new_user = user.model_dump()
-    user_exist = db.get_user_by_email(new_user["email"])
+    result, error = auth_service.create_user(user.email, user.password)
 
-    if user_exist:
-        logger.warning("User already exists")
+    if error == "user_exists":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail="User already exists")
-    
-    password_hash = security.hash_password(new_user['password'])
-    create_new_user = db.create_user(new_user['email'],password_hash)
 
-    if create_new_user:
-        return{ "detail": "New user successfully created"}
+    if error == "create_failed":
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Unable to create user")
 
+    return result
 
 @router.post("/user/login")
 def login(user: UserLogin):
-    current_user = user.model_dump()
-    user_exist = db.get_user_by_email(current_user["email"])
-    
-    if not user_exist:
-        raise HTTPException (status_code=status.HTTP_401_UNAUTHORIZED,
-                             detail="Invalid email or password"
-                             )
+    result , error = auth_service.login_user(user.email, user.password)
 
-    validate_password = security.verify_password(user_exist['password_hash'],current_user["password"])
-
-    if not validate_password:
+    if error == "invalid_credentials":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid email or password"
-                            )
-    access_token = security.create_access_token(user_exist["id"])
+                            detail="Invalid email or password")
 
-    if not user_exist["active"]:
+    if error == "account_disabled":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="User account is disabled")
 
-    return{
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
-    ):
-    token = credentials.credentials
-    user_id = security.decode_access_token(token)
-
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token")
-
-    user = db.get_user_by_id(user_id)
-
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found")
-    if not user["active"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-        detail="User account is disabled")
-
-    return user
-
-def require_admin(
-    current_user = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-
-    return current_user
+    return result
 
 @router.get("/user/me")
 def get_me(current_user = Depends(get_current_user)):
@@ -186,7 +139,7 @@ def search_company(code, exchange):
 
     if error == "unsupported_exchange":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Exchange {code.upper()}.{exchange.upper()} is not supported")
+                            detail=f"Exchange {exchange.upper()} is not supported")
 
     if error == "company_not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
