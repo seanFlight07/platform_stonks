@@ -1,22 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
-from integrations import api_fetcher
-from utils import db, security, transforms, validation
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer
+from starlette.status import HTTP_201_CREATED
+
+from utils import db
 from utils import logger as logger_utils
+from web.dependencies.auth import get_current_user, require_admin
 from web.models import (
     CompanyCreate,
     SearchCompany,
     UserCreate,
     UserLogin,
 )
+from web.services import auth_service, company_service, price_service
 
 router = APIRouter()
 logger = logger_utils.setup_logger(__name__)
 bearer_scheme = HTTPBearer()
 #############################################################
-# Health check
+# Health aheck
 #############################################################
 @router.get("/health",status_code=status.HTTP_200_OK)
 def health():
@@ -31,79 +33,31 @@ def health():
 #############################################################
 @router.post("/user/create-user", status_code=HTTP_201_CREATED)
 def create_user(user: UserCreate):
-    new_user = user.model_dump()
-    user_exist = db.get_user_by_email(new_user["email"])
+    result, error = auth_service.create_user(user.email, user.password)
 
-    if user_exist:
-        logger.warning("User already exists")
+    if error == "user_exists":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail="User already exists")
-    
-    password_hash = security.hash_password(new_user['password'])
-    create_new_user = db.create_user(new_user['email'],password_hash)
 
-    if create_new_user:
-        return{ "detail": "New user successfully created"}
+    if error == "create_failed":
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Unable to create user")
 
+    return result
 
 @router.post("/user/login")
 def login(user: UserLogin):
-    current_user = user.model_dump()
-    user_exist = db.get_user_by_email(current_user["email"])
-    
-    if not user_exist:
-        raise HTTPException (status_code=status.HTTP_401_UNAUTHORIZED,
-                             detail="Invalid email or password"
-                             )
+    result , error = auth_service.login_user(user.email, user.password)
 
-    validate_password = security.verify_password(user_exist['password_hash'],current_user["password"])
-
-    if not validate_password:
+    if error == "invalid_credentials":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid email or password"
-                            )
-    access_token = security.create_access_token(user_exist["id"])
+                            detail="Invalid email or password")
 
-    if not user_exist["active"]:
+    if error == "account_disabled":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="User account is disabled")
 
-    return{
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
-    ):
-    token = credentials.credentials
-    user_id = security.decode_access_token(token)
-
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token")
-
-    user = db.get_user_by_id(user_id)
-
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found")
-    if not user["active"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-        detail="User account is disabled")
-
-    return user
-
-def require_admin(
-    current_user = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-
-    return current_user
+    return result
 
 @router.get("/user/me")
 def get_me(current_user = Depends(get_current_user)):
@@ -118,11 +72,11 @@ def get_me(current_user = Depends(get_current_user)):
 #############################################################
 @router.get("/companies")
 def get_companies():
-    return db.get_all_companies()
+    return company_service.get_company()
 
 @router.get("/companies/{code}/prices")
 def get_price(code: str):
-    return db.get_prices(code)
+    return price_service.get_prices(code)
 
 #############################################################
 # Post functions to DB
@@ -131,7 +85,7 @@ def get_price(code: str):
 #post the company data to send to the db.
 def post_company(company: CompanyCreate):
     company_data = company.model_dump()
-    inserted = db.insert_company(company_data)
+    inserted = company_service.create_company(company_data)
     if inserted:
         return {
             "detail": f"Company {company.code} successfully inserted"
@@ -142,84 +96,37 @@ def post_company(company: CompanyCreate):
 
 @router.post("/companies/{code}/prices", status_code=status.HTTP_201_CREATED)
 def post_prices(code: str, current_user=Depends(require_admin)):
-    company = db.get_company(code)
-    if company is None:
-        logger.warning("Company %s does not exist in db", code)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Company {code} does not exist")
-    logger.info("Starting historical data insert for company %s",company["code"])
-    data = api_fetcher.api_fetch_stock_history(company["code"],company['exchange']) 
-    data = transforms.transform_api_historical(data,company["code"])
-    if validation.validation(data):
-        db.insert_data(data)
-        return {
-            "detail": f"Company {company["code"]} successfully inserted"
-        }
-    else:
-        logger.warning("Failed validation for company %s",company['code'])
-    logger.info("Historical upload completed")
+    company, error = price_service.load_historical_prices(code)
 
+    if error == "company_not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Company {code} does not exist")
+
+    if error == "validation_failed":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            detail=f"Histroical data for {code} failed validation")
+
+    return {
+        "detail": f"Company {company['code']} successfully inserted"
+    }
 
 @router.post("/companies/load/", status_code=HTTP_201_CREATED)
 def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
-    code = code.upper()
-    exchange = exchange.upper()
+    result, error = company_service.onboard_company(code, exchange)
 
-    # Check company exists in yfinance
-    raw_company_data = api_fetcher.api_search_company(code, exchange)
+    if error == "unsupported_exchange":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Exchange {exchange.upper()} not supported")
 
-    if not raw_company_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Company {code}.{exchange} not found"
-        )
+    if error == "company_exists":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Company {code.upper()} alread exists in db")
 
-    # Convert yfinance company data to our database format
-    transformed_company = transforms.transform_company(raw_company_data)
+    if error == "validation_failed":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            detail=f"Histroical data for {code.upper()} failed validation")
 
-    # Get exchange configuration
-    exchange_info = db.get_exchange(exchange)
-
-    if exchange_info is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Exchange {exchange} is not supported"
-        )
-
-    # Check whether we can ingest now
-    black_out_validation = validation.is_black_out(exchange_info)
-
-    # No blackout - insert immediately
-    insert_data = db.insert_company(transformed_company)
-
-    if not insert_data:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Company {code} already exists in db"
-        )
-
-    # Fetch historical prices
-    price_data = api_fetcher.api_fetch_stock_history(code, exchange,blackout=black_out_validation)
-    price_data = transforms.transform_api_historical(price_data, code)
-
-    if not validation.validation(price_data):
-        logger.warning(
-            "Failed validation for company %s",
-            code
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Historical data for {code} failed validation"
-        )
-
-    # Insert historical prices
-    db.insert_data(price_data)
-
-    return {
-        "detail": f"Company {code} successfully inserted"
-    }
+    return result
 
 
 
@@ -228,20 +135,14 @@ def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
 #############################################################
 @router.get("/company-search/{code}.{exchange}", response_model=SearchCompany)
 def search_company(code, exchange):
-    code = code.upper()
-    exchange = exchange.upper()
-    company_info = api_fetcher.api_search_company(code,exchange)
-    exchange_info = db.get_exchange(exchange)
-    if company_info is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
-                            detail=f"Company {code}.{exchange} not found")
-    
-    if exchange_info is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
-                            detail=f"Exchange {exchange} is not supported")
+    company_info, error = company_service.search_company(code, exchange)
 
+    if error == "unsupported_exchange":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Exchange {exchange.upper()} is not supported")
 
-    company_info["timezone"] = exchange_info.get("timezone")
+    if error == "company_not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Company {code.upper()}.{exchange.upper()} not found")
 
     return company_info
-
