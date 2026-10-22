@@ -1,5 +1,6 @@
-from utils import db
+from utils import db, transforms, validation
 from integrations import api_fetcher
+from web.services import price_service
 
 def get_company():
     return db.get_all_companies()
@@ -27,3 +28,38 @@ def search_company(code: str, exchange: str):
     company_info["timezone"] = exchange_info.get("timezone")
 
     return company_info, None
+
+def onboard_company(code: str, exchange: str):
+    code = code.upper()
+    exchange = exchange.upper()
+
+    # 1. Search for company and validate exchange
+    company_info, error = search_company(code, exchange)
+
+    if error:
+        return None, error
+
+    # 2. Transform company information
+    transformed_company = transforms.transform_company(company_info)
+
+    # 3. Retrieve exchange configuration
+    exchange_info = db.get_exchange(exchange)
+
+    # 4. Determine blackout status
+    blackout = validation.is_black_out(exchange_info)
+
+    # 5. Insert company
+    inserted = create_company(transformed_company)
+
+    if not inserted:
+        return None, "company_exists"
+
+    # 6. Load historical prices
+    company, error = price_service.load_historical_prices(code,blackout=blackout)
+
+    if error:
+        return None, error
+
+    return {
+        "detail": f"Company {code} successfully inserted"
+    }, None
