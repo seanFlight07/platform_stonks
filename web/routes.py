@@ -11,12 +11,13 @@ from web.models import (
     UserCreate,
     UserLogin,
 )
+from web.services import company_service
 
 router = APIRouter()
 logger = logger_utils.setup_logger(__name__)
 bearer_scheme = HTTPBearer()
 #############################################################
-# Health check
+# Health aheck
 #############################################################
 @router.get("/health",status_code=status.HTTP_200_OK)
 def health():
@@ -118,7 +119,7 @@ def get_me(current_user = Depends(get_current_user)):
 #############################################################
 @router.get("/companies")
 def get_companies():
-    return db.get_all_companies()
+    return company_service.get_company()
 
 @router.get("/companies/{code}/prices")
 def get_price(code: str):
@@ -131,7 +132,7 @@ def get_price(code: str):
 #post the company data to send to the db.
 def post_company(company: CompanyCreate):
     company_data = company.model_dump()
-    inserted = db.insert_company(company_data)
+    inserted = company_service.create_company(company_data)
     if inserted:
         return {
             "detail": f"Company {company.code} successfully inserted"
@@ -228,20 +229,14 @@ def load_company_and_data(code, exchange, current_user=Depends(require_admin)):
 #############################################################
 @router.get("/company-search/{code}.{exchange}", response_model=SearchCompany)
 def search_company(code, exchange):
-    code = code.upper()
-    exchange = exchange.upper()
-    company_info = api_fetcher.api_search_company(code,exchange)
-    exchange_info = db.get_exchange(exchange)
-    if company_info is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
-                            detail=f"Company {code}.{exchange} not found")
-    
-    if exchange_info is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND,
-                            detail=f"Exchange {exchange} is not supported")
+    company_info, error = company_service.search_company(code, exchange)
 
+    if error == "unsupported_exchange":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Exchange {code.upper()}.{exchange.upper()} is not supported")
 
-    company_info["timezone"] = exchange_info.get("timezone")
+    if error == "company_not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Company {code.upper()}.{exchange.upper()} not found")
 
     return company_info
-
