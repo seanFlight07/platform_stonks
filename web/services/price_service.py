@@ -1,14 +1,19 @@
 from integrations import api_fetcher
-from utils import db, transforms, validation
 from utils import logger as logger_utils
+from utils import transforms, validation
+from web.repositories.company_repository import CompanyRepository
+from web.repositories.price_repository import PriceRepository
 
 logger = logger_utils.setup_logger(__name__)
 
+company_repository = CompanyRepository()
+price_repository = PriceRepository()
+
 def get_prices(code: str):
-    return db.get_prices(code)
+    return price_repository.get_prices(code)
 
 def load_historical_prices(code: str, blackout: bool = False):
-    company = db.get_company(code)
+    company = company_repository.get_company(code)
 
     if company is None:
         return None, "company_not_found"
@@ -36,7 +41,7 @@ def load_historical_prices(code: str, blackout: bool = False):
         )
         return None, "validation_failed"
 
-    db.insert_data(data)
+    price_repository.insert_data(data)
 
     logger.info(
         "Historical upload completed for %s",
