@@ -1,13 +1,15 @@
 from integrations import api_fetcher
 from utils import db, transforms, validation
+from web.repositories.company_repository import CompanyRepository
 from web.services import price_service
 
+company_repository = CompanyRepository()
 
 def get_company():
-    return db.get_all_companies()
+    return company_repository.get_all_companies()
 
 def create_company(company_data: dict) -> bool:
-    inserted = db.insert_company(company_data)
+    inserted = company_repository.insert_company(company_data)
     return inserted
 
 def search_company(code: str, exchange: str):
