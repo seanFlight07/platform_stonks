@@ -106,6 +106,12 @@ def post_prices(code: str, current_user=Depends(require_admin)):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                             detail=f"Histroical data for {code} failed validation")
 
+    if company is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Historical price loading returned no company",
+        )
+
     return {
         "detail": f"Historical prices for {company['code']} successfully processed"
     }

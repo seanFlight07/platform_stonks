@@ -1,11 +1,12 @@
-from integrations import api_fetcher
 from utils import db, transforms, validation
+from utils import logger as logger_utils
+from web.clients.yahoo_finance_client import YahooFinanceClient
 from web.repositories.company_repository import CompanyRepository
 from web.services import price_service
-from utils import logger as logger_utils
 
 logger = logger_utils.setup_logger(__name__)
 company_repository = CompanyRepository()
+yahoo_client = YahooFinanceClient()
 
 def get_company():
     return company_repository.get_all_companies()
@@ -23,7 +24,7 @@ def search_company(code: str, exchange: str):
     if exchange_info is None:
         return None, "unsupported_exchange"
 
-    company_info = api_fetcher.api_search_company(
+    company_info = yahoo_client.get_company_info(
         code, exchange
     )
 

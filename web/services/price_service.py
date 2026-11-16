@@ -1,6 +1,6 @@
-from integrations import api_fetcher
 from utils import logger as logger_utils
 from utils import transforms, validation
+from web.clients.yahoo_finance_client import YahooFinanceClient
 from web.repositories.company_repository import CompanyRepository
 from web.repositories.price_repository import PriceRepository
 
@@ -8,6 +8,7 @@ logger = logger_utils.setup_logger(__name__)
 
 company_repository = CompanyRepository()
 price_repository = PriceRepository()
+yahoo_client = YahooFinanceClient()
 
 def get_prices(code: str):
     return price_repository.get_prices(code)
@@ -23,9 +24,10 @@ def load_historical_prices(code: str, blackout: bool = False):
         company["code"]
     )
 
-    data = api_fetcher.api_fetch_stock_history(
+    data = yahoo_client.get_price_history(
         company["code"],
         company["exchange"],
+        period="2y",
         blackout=blackout
     )
 
