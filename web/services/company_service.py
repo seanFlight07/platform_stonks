@@ -2,7 +2,9 @@ from integrations import api_fetcher
 from utils import db, transforms, validation
 from web.repositories.company_repository import CompanyRepository
 from web.services import price_service
+from utils import logger as logger_utils
 
+logger = logger_utils.setup_logger(__name__)
 company_repository = CompanyRepository()
 
 def get_company():
@@ -55,14 +57,25 @@ def onboard_company(code: str, exchange: str):
     inserted = create_company(transformed_company)
 
     if not inserted:
-        return None, "company_exists"
+        existing_prices = price_service.get_prices(code)
+
+        if existing_prices:
+            return None, "company_exists"
+
+        logger.info(
+            "Company %s exists without prices. Resuming onboarding.",
+            code,
+        )
 
     # 6. Load historical prices
-    _, error = price_service.load_historical_prices(code,blackout=blackout)
+    _, error = price_service.load_historical_prices(
+        code,
+        blackout=blackout,
+    )
 
     if error:
         return None, error
 
     return {
-        "detail": f"Company {code} successfully inserted"
+        "detail": f"Company {code} onboarded successfully"
     }, None

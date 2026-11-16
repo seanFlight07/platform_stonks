@@ -107,7 +107,7 @@ def post_prices(code: str, current_user=Depends(require_admin)):
                             detail=f"Histroical data for {code} failed validation")
 
     return {
-        "detail": f"Company {company['code']} successfully inserted"
+        "detail": f"Historical prices for {company['code']} successfully processed"
     }
 
 @router.post("/companies/load/", status_code=HTTP_201_CREATED)
