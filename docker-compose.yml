@@ -27,6 +27,7 @@ services:
       - ./web:/app/web
       - ./utils:/app/utils
       - ./integrations:/app/integrations
+      - ./scripts:/app/scripts
     environment:
       JWT_SECRET: ${JWT_SECRET}
     command:
